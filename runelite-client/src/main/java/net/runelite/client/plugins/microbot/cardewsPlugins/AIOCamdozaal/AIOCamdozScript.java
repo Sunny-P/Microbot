@@ -6,6 +6,7 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerScript;
+import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
@@ -70,7 +71,7 @@ public class AIOCamdozScript extends Script {
 
     public boolean run(AIOCamdozConfig config) {
         Microbot.enableAutoRunOn = false;
-        InitialiseAntiban();
+        CUtil.SetMyAntiban();
         State state = State.WALKING_TO_BANK;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
@@ -869,35 +870,6 @@ public class AIOCamdozScript extends Script {
             );
             Rs2GroundItem.lootItemsBasedOnNames(gemItemParams);
         }
-    }
-
-    private void InitialiseAntiban()
-    {
-        Rs2Antiban.resetAntibanSettings();
-
-        Rs2AntibanSettings.antibanEnabled = true;
-        Rs2AntibanSettings.usePlayStyle = true;
-        Rs2AntibanSettings.randomIntervals = true;
-        Rs2AntibanSettings.simulateFatigue = true;
-        Rs2AntibanSettings.simulateAttentionSpan = true;
-        Rs2AntibanSettings.behavioralVariability = true;
-        Rs2AntibanSettings.nonLinearIntervals = true;
-        Rs2AntibanSettings.dynamicIntensity = false;
-        Rs2AntibanSettings.dynamicActivity = false;
-        Rs2AntibanSettings.naturalMouse = true;
-        Rs2AntibanSettings.simulateMistakes = true;
-        Rs2AntibanSettings.moveMouseOffScreen = true;
-        Rs2AntibanSettings.moveMouseRandomly = true;
-        Rs2AntibanSettings.moveMouseRandomlyChance = 0.1;
-        Rs2AntibanSettings.takeMicroBreaks = true;
-        Rs2AntibanSettings.microBreakDurationLow = 3;
-        Rs2AntibanSettings.microBreakDurationHigh = 15;
-        Rs2AntibanSettings.microBreakChance = 0.08;
-
-        Rs2AntibanSettings.contextualVariability = true;
-        Rs2AntibanSettings.actionCooldownChance = 0.6;
-
-        Rs2AntibanSettings.devDebug = false;
     }
 
     private void GetConfigPickaxe(AIOCamdozConfig _config)
