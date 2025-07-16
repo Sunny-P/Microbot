@@ -26,6 +26,8 @@ package net.runelite.api;
 
 import lombok.Value;
 
+import java.awt.*;
+
 /**
  * A two-dimensional coordinate on the canvas.
  */

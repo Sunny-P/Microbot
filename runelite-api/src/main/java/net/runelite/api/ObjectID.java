@@ -6153,6 +6153,7 @@ public final class ObjectID
 	public static final int STEPPING_STONE_10663 = 10663;
 	public static final int CRATE_10671 = 10671;
 	public static final int CRATE_10672 = 10672;
+    public static final int FISHING_SPOT_CAMDOZAAL = 10686;
 	public static final int DOORWAY_10721 = 10721;
 	public static final int OLD_BOOKSHELF_10722 = 10722;
 	public static final int OLD_BOOKSHELF_10723 = 10723;
