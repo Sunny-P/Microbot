@@ -5,6 +5,7 @@ import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -30,7 +31,7 @@ public class LineFiremakerScript extends Script {
 
         firemakeLocation = null;
         burnLogs = true;
-        InitialiseAntiban();
+        CUtil.SetMyAntiban();
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -153,30 +154,5 @@ public class LineFiremakerScript extends Script {
     @Override
     public void shutdown() {
         super.shutdown();
-    }
-
-    private void InitialiseAntiban()
-    {
-        Rs2AntibanSettings.antibanEnabled = true;
-        Rs2AntibanSettings.usePlayStyle = true;
-        Rs2AntibanSettings.randomIntervals = true;
-        Rs2AntibanSettings.simulateFatigue = true;
-        Rs2AntibanSettings.simulateAttentionSpan = true;
-        Rs2AntibanSettings.behavioralVariability = true;
-        Rs2AntibanSettings.nonLinearIntervals = true;
-        Rs2AntibanSettings.dynamicIntensity = false;
-        Rs2AntibanSettings.dynamicActivity = false;
-        Rs2AntibanSettings.naturalMouse = true;
-        Rs2AntibanSettings.simulateMistakes = true;
-        Rs2AntibanSettings.moveMouseOffScreen = true;
-        Rs2AntibanSettings.moveMouseRandomly = true;
-        Rs2AntibanSettings.moveMouseRandomlyChance = 0.1;
-        Rs2AntibanSettings.takeMicroBreaks = true;
-        Rs2AntibanSettings.microBreakDurationLow = 2;
-        Rs2AntibanSettings.microBreakDurationHigh = 8;
-        Rs2AntibanSettings.microBreakChance = 0.1;
-
-        Rs2AntibanSettings.contextualVariability = true;
-        Rs2AntibanSettings.actionCooldownChance = 0.3;
     }
 }
