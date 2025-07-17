@@ -33,7 +33,8 @@ public class RandomEventScript extends Script {
         GRAVEDIGGER,
         DUNCE,
         SANDWICH_LADY,
-        DRILL_SERGEANT
+        DRILL_SERGEANT,
+        FREAKY_FORESTER
     }
     RandomEvent activeEvent = RandomEvent.NONE;
 
@@ -128,7 +129,7 @@ public class RandomEventScript extends Script {
                 return _config.dismissEvilTwin();
             case "Freaky Forester":
                 if (!_config.dismissFreakyForester()) {
-                    activeEvent = RandomEvent.NONE;
+                    activeEvent = RandomEvent.FREAKY_FORESTER;
                 }
                 return _config.dismissFreakyForester();
             case "Genie":
@@ -244,6 +245,9 @@ public class RandomEventScript extends Script {
                 break;
             case DRILL_SERGEANT:
                 HandleDrillSergeant();
+                break;
+            case FREAKY_FORESTER:
+
                 break;
         }
     }

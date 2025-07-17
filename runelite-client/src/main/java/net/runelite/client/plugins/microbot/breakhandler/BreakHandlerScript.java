@@ -9,6 +9,8 @@ import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.security.Login;
 import net.runelite.client.ui.ClientUI;
+import net.runelite.http.api.worlds.WorldRegion;
+
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -338,7 +340,7 @@ public class BreakHandlerScript extends Script {
     private void handleWorldSwitching() {
         if(!Microbot.isLoggedIn()){
             if (config.useRandomWorld()) {
-                new Login(Login.getRandomWorld(Login.activeProfile.isMember()));
+                new Login(Login.getRandomWorld(Login.activeProfile.isMember(), WorldRegion.AUSTRALIA));
             } else {
                 new Login();
             }
