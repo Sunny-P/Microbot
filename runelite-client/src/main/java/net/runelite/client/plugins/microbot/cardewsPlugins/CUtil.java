@@ -14,7 +14,7 @@ public class CUtil {
         return new Point(randX, randY);
     }
 
-    public static void SetMyAntiban()
+    public static void SetMyAntiban(double _microbreakChance)
     {
         Rs2Antiban.resetAntibanSettings();
 
@@ -33,9 +33,9 @@ public class CUtil {
         Rs2AntibanSettings.moveMouseRandomly = true;
         Rs2AntibanSettings.moveMouseRandomlyChance = 0.1;
         Rs2AntibanSettings.takeMicroBreaks = true;
-        Rs2AntibanSettings.microBreakDurationLow = 3;
+        Rs2AntibanSettings.microBreakDurationLow = 2;
         Rs2AntibanSettings.microBreakDurationHigh = 15;
-        Rs2AntibanSettings.microBreakChance = 0.08;
+        Rs2AntibanSettings.microBreakChance = _microbreakChance;
 
         Rs2AntibanSettings.contextualVariability = true;
         Rs2AntibanSettings.actionCooldownChance = 0.6;

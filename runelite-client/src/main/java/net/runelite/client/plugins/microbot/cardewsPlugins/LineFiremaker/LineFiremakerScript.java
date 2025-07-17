@@ -31,7 +31,7 @@ public class LineFiremakerScript extends Script {
 
         firemakeLocation = null;
         burnLogs = true;
-        CUtil.SetMyAntiban();
+        CUtil.SetMyAntiban(0.06);
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
