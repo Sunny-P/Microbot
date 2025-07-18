@@ -50,9 +50,13 @@ public class CardewSlayerScript extends Script {
                 if (Microbot.handlingRandomEvent) return;
                 long startTime = System.currentTimeMillis();
 
+                // Set Slayer master based on user plugin field text.
+                // Will log/print if there is no master selected, so they know to correct their spelling if need be
+                // This will not interrupt other parts of the script
                 if (currentMaster == SlayerMaster.NONE) {
                     currentMaster = GetSlayerMasterFromConfig(config);
                 }
+                // TODO: Handle eating food outside of the state machine
                 HandleStateMachine();
 
                 long endTime = System.currentTimeMillis();
@@ -81,6 +85,10 @@ public class CardewSlayerScript extends Script {
         switch(currentState)
         {
             case MOVING_TO_SLAYER_MASTER:
+                if (currentMaster == SlayerMaster.NONE) {
+                    Microbot.log("CardewSlayer: No Slayer Master!");
+                    break;
+                }
                 if (!Rs2Walker.isNear(currentMaster.getWorldPoint())) {
                     Rs2Walker.walkTo(currentMaster.getWorldPoint());
                 }
@@ -148,6 +156,10 @@ public class CardewSlayerScript extends Script {
                     }
                 }
                 else {
+                    if (currentMaster == SlayerMaster.NONE) {
+                        Microbot.log("CardewSlayer: No Slayer Master!");
+                        break;
+                    }
                     // Get task from master
                     Rs2Npc.interact(currentMaster.getName(), "Assignment");
                 }
