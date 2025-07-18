@@ -1,8 +1,11 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins;
 
+import lombok.Getter;
 import net.runelite.api.Point;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerTaskMonster;
 
 import java.awt.*;
 
@@ -41,5 +44,19 @@ public class CUtil {
         Rs2AntibanSettings.actionCooldownChance = 0.6;
 
         Rs2AntibanSettings.devDebug = false;
+    }
+
+    @Getter
+    public enum SlayerTarget {
+        NONE(null, new WorldPoint(0,0,0)),
+        CAVE_CRAWLER(SlayerTaskMonster.CAVE_CRAWLER, new WorldPoint(2791, 9996, 0));
+
+        private final SlayerTaskMonster monsterData;
+        private final WorldPoint location;
+
+        SlayerTarget(SlayerTaskMonster _monsterData, WorldPoint _location) {
+            this.monsterData = _monsterData;
+            this.location = _location;
+        }
     }
 }
