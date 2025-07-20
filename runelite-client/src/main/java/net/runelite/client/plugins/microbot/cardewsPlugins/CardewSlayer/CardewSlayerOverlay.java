@@ -44,6 +44,11 @@ public class CardewSlayerOverlay extends OverlayPanel {
                             .left("MOVING_TO_MONSTER_LOCATION")
                             .build());
                     break;
+                case SLAYING_MONSTER:
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("SLAYING_MONSTER")
+                            .build());
+                    break;
                 case MOVING_TO_NEAREST_BANK:
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("MOVING_TO_NEAREST_BANK")

@@ -6,6 +6,7 @@ import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
+import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -26,11 +27,12 @@ public class CardewSlayerScript extends Script {
         MOVING_TO_SLAYER_MASTER,
         GETTING_SLAYER_TASK,
         MOVING_TO_MONSTER_LOCATION,
+        SLAYING_MONSTER,
         MOVING_TO_NEAREST_BANK,
         BANKING
     }
     @Getter
-    static States currentState = States.GETTING_SLAYER_TASK;
+    static States currentState = States.MOVING_TO_SLAYER_MASTER;
 
     SlayerMaster currentMaster = SlayerMaster.NONE;
 
@@ -89,11 +91,15 @@ public class CardewSlayerScript extends Script {
                     Microbot.log("CardewSlayer: No Slayer Master!");
                     break;
                 }
-                if (!Rs2Walker.isNear(currentMaster.getWorldPoint())) {
+                WorldPoint cornerNW_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() + 2, currentMaster.getWorldPoint().getY() - 2, currentMaster.getWorldPoint().getPlane());
+                WorldPoint cornerSE_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() - 2, currentMaster.getWorldPoint().getY() + 2, currentMaster.getWorldPoint().getPlane());
+
+                if (!Rs2Walker.isInArea(cornerNW_MTSM, cornerSE_MTSM)) {
                     Rs2Walker.walkTo(currentMaster.getWorldPoint());
                 }
                 else {
                     // We are near the master
+                    Microbot.log("We are near the master");
                     currentState = States.GETTING_SLAYER_TASK;
                 }
                 break;
@@ -166,6 +172,18 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case MOVING_TO_MONSTER_LOCATION:
+                WorldPoint cornerNW_MTML = new WorldPoint(slayerTarget.getLocation().getX() + 5, slayerTarget.getLocation().getY() - 5, slayerTarget.getLocation().getPlane());
+                WorldPoint cornerSE_MTML = new WorldPoint(slayerTarget.getLocation().getX() - 5, slayerTarget.getLocation().getY() + 5, slayerTarget.getLocation().getPlane());
+                if (!Rs2Walker.isInArea(cornerNW_MTML, cornerSE_MTML)) {
+                    Rs2Walker.walkTo(slayerTarget.getLocation());
+                }
+                else {
+                    // We have reached our destination
+                    currentState = States.SLAYING_MONSTER;
+                }
+                break;
+
+            case SLAYING_MONSTER:
 
                 break;
 
