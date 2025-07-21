@@ -39,6 +39,7 @@ public class RandomEventScript extends Script {
     RandomEvent activeEvent = RandomEvent.NONE;
 
     boolean talkedToEvent = false;
+    boolean xpRewardChosen = false;
 
     public boolean run(RandomEventConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -49,6 +50,8 @@ public class RandomEventScript extends Script {
                 if (Microbot.bankPinBeingHandled) return;
                 if (Microbot.pauseAllScripts.get()) return;
                 long startTime = System.currentTimeMillis();
+
+                if (HandleXPLamp(config)) return;
 
                 HandleRandomEvents(config);
 
@@ -75,6 +78,110 @@ public class RandomEventScript extends Script {
     @Override
     public void shutdown() {
         super.shutdown();
+    }
+
+    private boolean HandleXPLamp(RandomEventConfig _config)
+    {
+        // If there is a lamp in the players inventory, handle lamp with chosen skill
+        // Then return. I don't want potential script in-fighting for control.
+        if (Rs2Inventory.hasItem("Lamp"))
+        {
+            Microbot.handlingRandomEvent = true;
+            if (Rs2Widget.isWidgetVisible(240, 0))
+            {
+                if (xpRewardChosen)
+                {
+                    // Our skill to put xp in has been chosen,
+                    // Click the confirm widget
+                    if (Rs2Widget.clickWidget(240, 26))
+                    {
+                        xpRewardChosen = false;
+                        Microbot.handlingRandomEvent = false;
+                        return true;
+                    }
+                }
+
+                switch (_config.skillXPReward())
+                {
+                    case ATTACK:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 2);
+                        break;
+                    case STRENGTH:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 3);
+                        break;
+                    case RANGED:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 4);
+                        break;
+                    case MAGIC:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 5);
+                        break;
+                    case DEFENCE:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 6);
+                        break;
+                    case HITPOINTS:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 7);
+                        break;
+                    case PRAYER:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 8);
+                        break;
+                    case AGILITY:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 9);
+                        break;
+                    case HERBLORE:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 10);
+                        break;
+                    case THIEVING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 11);
+                        break;
+                    case CRAFTING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 12);
+                        break;
+                    case RUNECRAFT:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 13);
+                        break;
+                    case SLAYER:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 14);
+                        break;
+                    case FARMING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 15);
+                        break;
+                    case MINING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 16);
+                        break;
+                    case SMITHING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 17);
+                        break;
+                    case FISHING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 18);
+                        break;
+                    case COOKING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 19);
+                        break;
+                    case FIREMAKING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 20);
+                        break;
+                    case WOODCUTTING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 21);
+                        break;
+                    case FLETCHING:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 22);
+                        break;
+                    case CONSTRUCTION:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 23);
+                        break;
+                    case HUNTER:
+                        xpRewardChosen = Rs2Widget.clickWidget(240, 24);
+                        break;
+                }
+            }
+            else
+            {
+                Rs2Inventory.interact("Lamp", "Rub");
+            }
+
+            return true;
+        }
+        return false;
     }
 
     private boolean shouldDismissNpc(NPC _npc, RandomEventConfig _config)

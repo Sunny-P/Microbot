@@ -1,9 +1,9 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.randomEvents;
 
 import net.runelite.client.config.*;
+import net.runelite.client.plugins.microbot.globval.enums.Skill;
 
 @ConfigGroup("RandomEvent")
-@ConfigInformation("TODO: Implement using Lamps on a chosen skill")
 public interface RandomEventConfig extends Config {
     @ConfigItem(
             name = "Disable Auto Continue Dialogue",
@@ -13,10 +13,18 @@ public interface RandomEventConfig extends Config {
     )
     default boolean disableAutoContinue() { return false; }
 
+    @ConfigItem(
+            name = "Skill XP Reward",
+            keyName = "skillXPReward",
+            position = 1,
+            description = "Uses lamps in inventory on chosen skill"
+    )
+    default Skill skillXPReward() { return Skill.ATTACK; }
+
     @ConfigSection(
             name = "Dismissed Events",
             description = "Select which Random Events will be dismissed, instead of completed",
-            position = 0,
+            position = 2,
             closedByDefault = true
     )
     String dismissedEventsSection = "Configure which Random Events to dismiss, instead of complete";
