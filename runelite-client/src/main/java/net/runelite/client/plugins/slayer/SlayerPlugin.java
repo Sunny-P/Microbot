@@ -173,7 +173,7 @@ public class SlayerPlugin extends Plugin
 	@Setter(AccessLevel.PACKAGE)
 	private String taskName;
 
-	private TaskCounter counter;
+	private static TaskCounter counter;
 	private Instant infoTimer;
 	private boolean loginFlag;
 	private final List<Pattern> targetNames = new ArrayList<>();
@@ -796,5 +796,14 @@ public class SlayerPlugin extends Plugin
 	private static String capsString(String str)
 	{
 		return str.substring(0, 1).toUpperCase() + str.substring(1);
+	}
+
+	public static int GetCounterCount()
+	{
+		if (counter != null)
+		{
+			return counter.getCount();
+		}
+		return -1;
 	}
 }

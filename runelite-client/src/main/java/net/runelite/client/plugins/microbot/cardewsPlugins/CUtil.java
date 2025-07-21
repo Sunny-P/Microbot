@@ -49,7 +49,20 @@ public class CUtil {
     @Getter
     public enum SlayerTarget {
         NONE(null, new WorldPoint(0,0,0)),
-        CAVE_CRAWLER(SlayerTaskMonster.CAVE_CRAWLER, new WorldPoint(2791, 9996, 0));
+        BANSHEE(SlayerTaskMonster.BANSHEE, new WorldPoint(3436, 3558, 0)),
+        BAT(SlayerTaskMonster.BAT, new WorldPoint(3370, 3485, 0)),
+        BEAR(SlayerTaskMonster.BEAR, new WorldPoint(2705, 3340, 0)),
+        COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
+        CAVE_CRAWLER(SlayerTaskMonster.CAVE_CRAWLER, new WorldPoint(2791, 9996, 0)),
+        CRAWLING_HAND(SlayerTaskMonster.CRAWLING_HAND, new WorldPoint(3411, 3538, 0)),
+        GHOST(SlayerTaskMonster.GHOST, new WorldPoint(1690, 10062, 0)),
+        GOBLIN(SlayerTaskMonster.GOBLIN, new WorldPoint(3259, 3228, 0)),
+        ICEFIEND(SlayerTaskMonster.ICEFIEND, new WorldPoint(3007, 3474, 0)),
+        MINOTAUR(SlayerTaskMonster.MINOTAUR, new WorldPoint(1881, 5217, 0)),
+        RAT(SlayerTaskMonster.RAT, new WorldPoint(3199, 3209, 0)),
+        SCORPION(SlayerTaskMonster.SCORPION, new WorldPoint(3043, 9789, 0)),
+        SKELETON(SlayerTaskMonster.SKELETON, new WorldPoint(1641, 10047, 0)),
+        SPIDER(SlayerTaskMonster.SPIDER, new WorldPoint(3167, 3245, 0));
 
         private final SlayerTaskMonster monsterData;
         private final WorldPoint location;
