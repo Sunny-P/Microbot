@@ -98,7 +98,7 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissEvilBob() {
-        return false;
+        return true;
     }
     @ConfigItem(
             name = "Evil Bob: Prison Pete",
@@ -128,7 +128,7 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissFreakyForester() {
-        return false;
+        return true;
     }
     @ConfigItem(
             name = "Genie",
@@ -168,7 +168,7 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissKissTheFrog() {
-        return false;
+        return true;
     }
     // TODO: Check if whatever event the Mysterious Old Man is offering can be found out by having to talk to him
     // TODO: Or if we can tell what event it will be without talking to him
@@ -200,7 +200,7 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissMysteriousOldManMime() {
-        return false;
+        return true;
     }
     @ConfigItem(
             name = "Pillory",
@@ -230,7 +230,7 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissQuizMaster() {
-        return false;
+        return true;
     }
     @ConfigItem(
             name = "Rick Turpentine",
@@ -270,6 +270,6 @@ public interface RandomEventConfig extends Config {
             section = dismissedEventsSection
     )
     default boolean dismissSurpriseExam() {
-        return false;
+        return true;
     }
 }
