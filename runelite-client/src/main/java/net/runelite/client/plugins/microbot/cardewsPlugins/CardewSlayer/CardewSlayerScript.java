@@ -2,6 +2,8 @@ package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
 import lombok.Getter;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
@@ -15,7 +17,9 @@ import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
+import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -66,6 +70,7 @@ public class CardewSlayerScript extends Script {
     List<Rs2NpcModel> npcsInteractingWithPlayer = new ArrayList<>();
     boolean slayerGemChecked = false;
     boolean lootBanked = false;
+    boolean handleManualMovement = false;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -122,7 +127,7 @@ public class CardewSlayerScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 500, TimeUnit.MILLISECONDS);
+        }, 0, 600, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -236,6 +241,7 @@ public class CardewSlayerScript extends Script {
 
                 CheckForAndOpenSeedbox();
 
+
                 WorldPoint cornerNW_MTML = new WorldPoint(slayerTarget.getLocation().getX() - 10, slayerTarget.getLocation().getY() + 10, slayerTarget.getLocation().getPlane());
                 WorldPoint cornerSE_MTML = new WorldPoint(slayerTarget.getLocation().getX() + 10, slayerTarget.getLocation().getY() - 10, slayerTarget.getLocation().getPlane());
                 if (!Rs2Walker.isInArea(cornerSE_MTML, cornerNW_MTML)) {
@@ -270,7 +276,7 @@ public class CardewSlayerScript extends Script {
                 if (!Rs2Combat.inCombat())
                 {
                     // Not in combat. Pick a fight.
-
+                    // Check monsters that are already fighting the player
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
@@ -289,6 +295,8 @@ public class CardewSlayerScript extends Script {
                     }
                     else
                     {
+                        // We don't have any monsters currently in combat with us
+                        // Pick a fresh target
                         targetList = Rs2Npc.getAttackableNpcs()
                                 .filter(npc -> npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
                                 .collect(Collectors.toList());
@@ -307,6 +315,41 @@ public class CardewSlayerScript extends Script {
 
                             Rs2Npc.interact(target, "Attack");
                             Rs2Antiban.actionCooldown();
+                        }
+                    }
+                }
+                else
+                {
+                    Rs2NpcModel inCombatNpc;
+                    // We are in combat
+                    if (!npcsInteractingWithPlayer.isEmpty())
+                    {
+                        // Determine if this is something we need to use a slayer item on to kill
+                        switch (slayerTarget)
+                        {
+                            case LIZARD:
+                                inCombatNpc = npcsInteractingWithPlayer.stream()
+                                        .filter(npc -> npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
+                                        .findFirst().orElse(null);
+                                assert inCombatNpc != null;
+                                switch (inCombatNpc.getId())
+                                {
+                                    case NpcID.SLAYER_LIZARD_SMALL2_SANDY:
+                                    case NpcID.SLAYER_LIZARD_SMALL1_GREEN:
+                                    case NpcID.SLAYER_LIZARD_LARGE1_GREEN:
+                                    case NpcID.SLAYER_LIZARD_MASSIVE:
+                                    case NpcID.SLAYER_LIZARD_LARGE2_SANDY:
+                                    case NpcID.SLAYER_LIZARD_LARGE3_SANDY:
+                                        if (Rs2Inventory.contains(ItemID.SLAYER_ICY_WATER))
+                                        {
+                                            if (inCombatNpc.getHealthRatio() < 4)
+                                            {
+                                                Rs2Inventory.useItemOnNpc(ItemID.SLAYER_ICY_WATER, inCombatNpc);
+                                            }
+                                        }
+                                        break;
+                                }
+                                break;
                         }
                     }
                 }
@@ -419,18 +462,26 @@ public class CardewSlayerScript extends Script {
                 case NONE:
                     continue;
                 case BIRD:
-                    switch (_config.AlternativeBirdTask())
-                    {
-                        case SEAGULL:
-                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.SEAGULL.getLocation());
-                            break;
-                        case CHICKEN:
-                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.CHICKEN.getLocation());
-                            break;
-                        case TERRORBIRD:
-                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.TERRORBIRD.getLocation());
-                            break;
-                    }
+                    potentialTarget.SetLocation(_config.AlternativeBirdTask().getLocation());
+
+                    slayerTarget = potentialTarget;
+                    taskDeterminedFromAlternative = true;
+                    break;
+                case DWARF:
+                    potentialTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
+
+                    slayerTarget = potentialTarget;
+                    taskDeterminedFromAlternative = true;
+                    break;
+                case KALPHITE:
+                    potentialTarget.SetLocation(_config.AlternativeKalphiteTask().getLocation());
+
+                    slayerTarget = potentialTarget;
+                    taskDeterminedFromAlternative = true;
+                    break;
+                case WOLF:
+                    potentialTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
+
                     slayerTarget = potentialTarget;
                     taskDeterminedFromAlternative = true;
                     break;

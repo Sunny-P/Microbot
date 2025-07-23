@@ -4,6 +4,7 @@ import net.runelite.client.config.*;
 import net.runelite.client.plugins.microbot.globval.enums.Skill;
 
 @ConfigGroup("RandomEvent")
+@ConfigInformation("Handled Events: \nBeekeeper, Count Check, Drill Demon, Genie, Gravedigger, Sandwich lady")
 public interface RandomEventConfig extends Config {
     @ConfigItem(
             name = "Disable Auto Continue Dialogue",

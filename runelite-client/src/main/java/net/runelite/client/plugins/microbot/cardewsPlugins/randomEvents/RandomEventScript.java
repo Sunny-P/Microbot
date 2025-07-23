@@ -4,6 +4,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
@@ -539,10 +540,7 @@ public class RandomEventScript extends Script {
             Microbot.handlingRandomEvent = false;
         }
         Microbot.log("Exercise to do: " + exerciseToDo);
-        int varbitSign1 = 1335;
-        int varbitSign2 = 1336;
-        int varbitSign3 = 1337;
-        int varbitSign4 = 1338;
+
         if (Rs2Player.isAnimating(3000))
         {
             return;
@@ -555,19 +553,19 @@ public class RandomEventScript extends Script {
         switch (exerciseToDo)
         {
             case JOG:
-                if (Microbot.getVarbitValue(varbitSign1) == 1)
+                if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_1) == 1)
                 {
                     Rs2GameObject.interact(20810, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign2) == 1)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_2) == 1)
                 {
                     Rs2GameObject.interact(16508, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign3) == 1)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_3) == 1)
                 {
                     Rs2GameObject.interact(9313, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign4) == 1)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_4) == 1)
                 {
                     Rs2GameObject.interact(20801, "Use");
                 }
@@ -577,19 +575,19 @@ public class RandomEventScript extends Script {
                 }
                 break;
             case SIT_UPS:
-                if (Microbot.getVarbitValue(varbitSign1) == 2)
+                if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_1) == 2)
                 {
                     Rs2GameObject.interact(20810, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign2) == 2)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_2) == 2)
                 {
                     Rs2GameObject.interact(16508, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign3) == 2)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_3) == 2)
                 {
                     Rs2GameObject.interact(9313, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign4) == 2)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_4) == 2)
                 {
                     Rs2GameObject.interact(20801, "Use");
                 }
@@ -599,19 +597,19 @@ public class RandomEventScript extends Script {
                 }
                 break;
             case PUSH_UPS:
-                if (Microbot.getVarbitValue(varbitSign1) == 3)
+                if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_1) == 3)
                 {
                     Rs2GameObject.interact(20810, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign2) == 3)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_2) == 3)
                 {
                     Rs2GameObject.interact(16508, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign3) == 3)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_3) == 3)
                 {
                     Rs2GameObject.interact(9313, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign4) == 3)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_4) == 3)
                 {
                     Rs2GameObject.interact(20801, "Use");
                 }
@@ -621,19 +619,19 @@ public class RandomEventScript extends Script {
                 }
                 break;
             case STAR_JUMPS:
-                if (Microbot.getVarbitValue(varbitSign1) == 4)
+                if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_1) == 4)
                 {
                     Rs2GameObject.interact(20810, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign2) == 4)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_2) == 4)
                 {
                     Rs2GameObject.interact(16508, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign3) == 4)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_3) == 4)
                 {
                     Rs2GameObject.interact(9313, "Use");
                 }
-                else if (Microbot.getVarbitValue(varbitSign4) == 4)
+                else if (Microbot.getVarbitValue(VarbitID.MACRO_DRILLDEMON_POST_4) == 4)
                 {
                     Rs2GameObject.interact(20801, "Use");
                 }

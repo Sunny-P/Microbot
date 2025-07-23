@@ -5,7 +5,7 @@ import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 
 @ConfigGroup("CardewSlayer")
-@ConfigInformation("")
+@ConfigInformation("May need Shantay Pass' in Inventory for Kalphite/Desert tasks")
 public interface CardewSlayerConfig extends Config{
     @ConfigItem(
             name = "Slayer Master",
@@ -31,6 +31,33 @@ public interface CardewSlayerConfig extends Config{
             section = taskAlternativeSection
     )
     default CUtil.AlternativeBirdTask AlternativeBirdTask() { return CUtil.AlternativeBirdTask.CHICKEN; }
+
+    @ConfigItem(
+            name = "Dwarf Alternative Task",
+            keyName = "dwarfAleternativeTask",
+            position = 1,
+            description = "The monster you will slay for when on task for Dwarves",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeDwarfTask AlternativeDwarfTask() { return CUtil.AlternativeDwarfTask.DWARF_LVL20; }
+
+    @ConfigItem(
+            name = "Kalphite Alternative Task",
+            keyName = "kalphiteAlternativeTask",
+            position = 2,
+            description = "The monster you will slay for when on task for Kalphite",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeKalphiteTask AlternativeKalphiteTask() { return CUtil.AlternativeKalphiteTask.KALPHITE_WORKER_LVL28_NORTHWEST; }
+
+    @ConfigItem(
+            name = "Wolf Alternative Task",
+            keyName = "wolfAlternativeTask",
+            position = 3,
+            description = "The monster you will slay for when on task for Wolves",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeWolfTask AlternativeWolfTask() { return CUtil.AlternativeWolfTask.WHITE_WOLF_LVL25; }
 
     @ConfigItem(
             name = "Eat Food %",

@@ -1978,9 +1978,17 @@ public class Rs2Bank {
         if (Rs2Inventory.emptySlotCount() <= emptySlotCount) {
             boolean isBankOpen = Rs2Bank.walkToBankAndUseBank(bankLocation);
             if (isBankOpen) {
+                boolean depositedItems = false;
                 for (String itemName : itemNames) {
-                    depositAll(itemName,false);
+                    if (depositAll(itemName,false))
+                    {
+                        depositedItems = true;
+                    }
                     //Rs2Bank.depositAll(x -> x.name.toLowerCase().contains(itemName));
+                }
+                if (depositedItems)
+                {
+                    Rs2Bank.closeBank();
                 }
             }
             return false;

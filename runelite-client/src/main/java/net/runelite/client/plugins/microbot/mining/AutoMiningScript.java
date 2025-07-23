@@ -42,12 +42,13 @@ public class AutoMiningScript extends Script {
         initialPlayerLocation = null;
         Rs2Antiban.resetAntibanSettings();
         Rs2Antiban.antibanSetupTemplates.applyMiningSetup();
-        Rs2AntibanSettings.actionCooldownChance = 0.1;
+        Rs2AntibanSettings.actionCooldownChance = 0.03;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!super.run()) return;
                 if (!Microbot.isLoggedIn()) return;
                 if (Rs2AntibanSettings.actionCooldownActive) return;
+                if (Microbot.handlingRandomEvent) return;
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
                 }
