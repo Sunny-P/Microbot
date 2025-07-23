@@ -100,13 +100,19 @@ public class CardewSlayerScript extends Script {
                 if (currentMaster == SlayerMaster.NONE) {
                     currentMaster = config.SlayerMaster();
                 }
+                // Perhaps provide a statement forcing the player to use an emergency teleport
+                // When they drop below a health threshold?
+                // Bot Ring of Life lol; but higher threshold.
+
                 // Handle eating food outside the state machine
                 if (!Rs2Player.eatAt(config.EatFoodPercent()))
                 {
                     // If FALSE then we didn't eat
-                    // Handle emergency teleport/transitioning to banking state
+                    // Did we not eat because we don't have anymore food?
+                    // If so, we need to save ourselves
                     if (Rs2Inventory.getInventoryFood().isEmpty())
                     {
+                        // Handle emergency teleport/transitioning to banking state
                         if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION)
                         {
                             currentState = States.MOVING_TO_NEAREST_BANK;
