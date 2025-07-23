@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
 import net.runelite.client.config.*;
+import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 
 @ConfigGroup("CardewSlayer")
@@ -14,10 +15,27 @@ public interface CardewSlayerConfig extends Config{
     )
     default String SlayerMaster() { return SlayerMaster.TURAEL.getName(); }
 
+    @ConfigSection(
+            name = "Task Alternatives",
+            description = "When a slayer task with multiple options is received, it will take this choice.",
+            position = 1,
+            closedByDefault = true
+    )
+    String taskAlternativeSection = "When a slayer task with multiple options is received, it will take this choice.";
+
+    @ConfigItem(
+            name = "Bird Alternative Task",
+            keyName = "birdAlternativeTask",
+            position = 0,
+            description = "The monster you will slay for when on task for Birds",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeBirdTask AlternativeBirdTask() { return CUtil.AlternativeBirdTask.CHICKEN; }
+
     @ConfigItem(
             name = "Eat Food %",
             keyName = "eatFoodPercent",
-            position = 1,
+            position = 2,
             description = "At what percent of HP the Player will eat"
     )
     @Range(

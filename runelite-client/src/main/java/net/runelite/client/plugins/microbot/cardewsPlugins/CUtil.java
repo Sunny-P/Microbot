@@ -52,8 +52,9 @@ public class CUtil {
         BANSHEE(SlayerTaskMonster.BANSHEE, new WorldPoint(3436, 3558, 0)),
         BAT(SlayerTaskMonster.BAT, new WorldPoint(3370, 3485, 0)),
         BEAR(SlayerTaskMonster.BEAR, new WorldPoint(2705, 3340, 0)),
-        COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
+        BIRD(SlayerTaskMonster.BIRD, new WorldPoint(0, 0, 0)),
         CAVE_CRAWLER(SlayerTaskMonster.CAVE_CRAWLER, new WorldPoint(2791, 9996, 0)),
+        COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
         CRAWLING_HAND(SlayerTaskMonster.CRAWLING_HAND, new WorldPoint(3411, 3538, 0)),
         GHOST(SlayerTaskMonster.GHOST, new WorldPoint(1690, 10062, 0)),
         GOBLIN(SlayerTaskMonster.GOBLIN, new WorldPoint(3259, 3228, 0)),
@@ -62,13 +63,35 @@ public class CUtil {
         RAT(SlayerTaskMonster.RAT, new WorldPoint(3199, 3209, 0)),
         SCORPION(SlayerTaskMonster.SCORPION, new WorldPoint(3043, 9789, 0)),
         SKELETON(SlayerTaskMonster.SKELETON, new WorldPoint(1641, 10047, 0)),
-        SPIDER(SlayerTaskMonster.SPIDER, new WorldPoint(3167, 3245, 0));
+        SPIDER(SlayerTaskMonster.SPIDER, new WorldPoint(3167, 3245, 0)),
+        ZOMBIE(SlayerTaskMonster.ZOMBIE, new WorldPoint(3146, 9900, 0));
 
         private final SlayerTaskMonster monsterData;
-        private final WorldPoint location;
+        private WorldPoint location;
 
         SlayerTarget(SlayerTaskMonster _monsterData, WorldPoint _location) {
             this.monsterData = _monsterData;
+            this.location = _location;
+        }
+
+        public void SetLocation(WorldPoint _newLocation)
+        {
+            location = _newLocation;
+        }
+    }
+
+    @Getter
+    public enum AlternativeBirdTask {
+        SEAGULL("Seagull", new WorldPoint(3027, 3204, 0)),
+        CHICKEN("Chicken", new WorldPoint(3177, 3299, 0)),
+        TERRORBIRD("Terrorbird", new WorldPoint(2378, 3434, 0));
+
+        private final String monsterName;
+        private final WorldPoint location;
+
+        AlternativeBirdTask(String _monsterName, WorldPoint _location)
+        {
+            this.monsterName = _monsterName;
             this.location = _location;
         }
     }

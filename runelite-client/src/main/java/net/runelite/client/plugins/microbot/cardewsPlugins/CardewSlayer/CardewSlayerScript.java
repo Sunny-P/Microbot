@@ -83,6 +83,12 @@ public class CardewSlayerScript extends Script {
                 if (Microbot.handlingRandomEvent) return;
                 long startTime = System.currentTimeMillis();
 
+                // If targetMonsterName equals birds
+                // Then we go into a switch statement based on an enum case
+                // New enum needed which will hold Alternate bird tasks
+                // Let the player pick alternative task in config
+                // Then set our task to that
+
                 // Set Slayer master based on user plugin field text.
                 // Will log/print if there is no master selected, so they know to correct their spelling if need be
                 // This will not interrupt other parts of the script
@@ -102,6 +108,11 @@ public class CardewSlayerScript extends Script {
                         }
                     }
                 }
+                if (!Rs2Inventory.isFull())
+                {
+                    // Loot
+                    HandleLooting(config);
+                }
                 HandleStateMachine(config);
 
                 long endTime = System.currentTimeMillis();
@@ -111,7 +122,7 @@ public class CardewSlayerScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -239,75 +250,7 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case SLAYING_MONSTER:
-                if (!Rs2Inventory.isFull())
-                {
-                    // Loot
-                    if (_config.PickupUntradeables())
-                    {
-                        LootingParameters untradeableItemParams = new LootingParameters(
-                                10,
-                                1,
-                                1,
-                                1,
-                                false,
-                                _config.OnlyLootMyDrops(),
-                                "untradeable"
-                        );
-                        Rs2GroundItem.lootUntradables(untradeableItemParams);
-                    }
-
-                    LootingParameters valueBasedItemParams = new LootingParameters(
-                            _config.MinLootValue(),
-                            Integer.MAX_VALUE,
-                            10,
-                            1,
-                            1,
-                            false,
-                            _config.OnlyLootMyDrops()
-                    );
-                    Rs2GroundItem.lootItemBasedOnValue(valueBasedItemParams);
-
-                    if (_config.PickupRunes())
-                    {
-                        LootingParameters runesItemParams = new LootingParameters(
-                                10,
-                                1,
-                                1,
-                                1,
-                                false,
-                                _config.OnlyLootMyDrops(),
-                                " rune"
-                        );
-                        Rs2GroundItem.lootItemsBasedOnNames(runesItemParams);
-                    }
-                    if (_config.PickupSeeds())
-                    {
-                        LootingParameters seedItemParams = new LootingParameters(
-                                10,
-                                1,
-                                1,
-                                1,
-                                false,
-                                _config.OnlyLootMyDrops(),
-                                " seed"
-                        );
-                        Rs2GroundItem.lootItemsBasedOnNames(seedItemParams);
-                    }
-                    if (_config.PickupGrimyHerbs())
-                    {
-                        LootingParameters herbItemParams = new LootingParameters(
-                                10,
-                                1,
-                                1,
-                                1,
-                                false,
-                                _config.OnlyLootMyDrops(),
-                                "Grimy "
-                        );
-                        Rs2GroundItem.lootItemsBasedOnNames(herbItemParams);
-                    }
-                }
-                else
+                if (Rs2Inventory.isFull())
                 {
                     // Check inventory for food
                     if (!Rs2Inventory.getInventoryFood().isEmpty())
@@ -315,6 +258,11 @@ public class CardewSlayerScript extends Script {
                         // Eat some food to clear space for loot
                         Rs2Player.eatAt(1);
                     }
+                }
+
+                if (killsLeft <= 0)
+                {
+                    currentState = States.MOVING_TO_NEAREST_BANK;
                 }
 
                 npcsInteractingWithPlayer = Rs2Npc.getNpcsForPlayer().collect(Collectors.toList());
@@ -352,7 +300,6 @@ public class CardewSlayerScript extends Script {
                                     .orElse(null);
 
                             // If monster is not in camera, turn to it
-                            assert target != null;
                             if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
                             {
                                 Rs2Camera.turnTo(target);
@@ -466,8 +413,32 @@ public class CardewSlayerScript extends Script {
     void DetermineStateFromSlayerTask(CardewSlayerConfig _config)
     {
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
-            if (potentialTarget == CUtil.SlayerTarget.NONE) {
-                continue;
+            boolean taskDeterminedFromAlternative = false;
+            switch (potentialTarget)
+            {
+                case NONE:
+                    continue;
+                case BIRD:
+                    switch (_config.AlternativeBirdTask())
+                    {
+                        case SEAGULL:
+                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.SEAGULL.getLocation());
+                            break;
+                        case CHICKEN:
+                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.CHICKEN.getLocation());
+                            break;
+                        case TERRORBIRD:
+                            potentialTarget.SetLocation(CUtil.AlternativeBirdTask.TERRORBIRD.getLocation());
+                            break;
+                    }
+                    slayerTarget = potentialTarget;
+                    taskDeterminedFromAlternative = true;
+                    break;
+            }
+            if (taskDeterminedFromAlternative)
+            {
+                currentState = States.MOVING_TO_NEAREST_BANK;
+                break;
             }
             if (targetMonsterName.contains(potentialTarget.getMonsterData().getMonster().toLowerCase())){
                 slayerTarget = potentialTarget;
@@ -544,5 +515,73 @@ public class CardewSlayerScript extends Script {
     public void DeductKillsLeft()
     {
         killsLeft--;
+    }
+
+    void HandleLooting(CardewSlayerConfig _config)
+    {
+        if (_config.PickupUntradeables())
+        {
+            LootingParameters untradeableItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    "untradeable"
+            );
+            Rs2GroundItem.lootUntradables(untradeableItemParams);
+        }
+
+        LootingParameters valueBasedItemParams = new LootingParameters(
+                _config.MinLootValue(),
+                Integer.MAX_VALUE,
+                10,
+                1,
+                1,
+                false,
+                _config.OnlyLootMyDrops()
+        );
+        Rs2GroundItem.lootItemBasedOnValue(valueBasedItemParams);
+
+        if (_config.PickupRunes())
+        {
+            LootingParameters runesItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    " rune"
+            );
+            Rs2GroundItem.lootItemsBasedOnNames(runesItemParams);
+        }
+        if (_config.PickupSeeds())
+        {
+            LootingParameters seedItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    " seed"
+            );
+            Rs2GroundItem.lootItemsBasedOnNames(seedItemParams);
+        }
+        if (_config.PickupGrimyHerbs())
+        {
+            LootingParameters herbItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    "Grimy "
+            );
+            Rs2GroundItem.lootItemsBasedOnNames(herbItemParams);
+        }
     }
 }

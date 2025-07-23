@@ -120,7 +120,7 @@ public class Login {
     }
 
     public static int getRandomWorld(boolean isMembers) {
-        return getRandomWorld(isMembers, null);
+        return getRandomWorld(isMembers, WorldRegion.AUSTRALIA);
     }
 
     public static int getNextWorld(boolean isMembers) {

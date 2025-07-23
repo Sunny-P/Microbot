@@ -263,6 +263,10 @@ public class TemporossScript extends Script {
         }
 
         // Check for hammer
+        if (Rs2Equipment.isWearing("Imcando hammer", false) || Rs2Inventory.hasItem("Imcando hammer", false))
+        {
+            return false;
+        }
         return temporossConfig.hammer() && !Rs2Inventory.contains(ItemID.HAMMER);
     }
 
