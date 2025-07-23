@@ -2,10 +2,7 @@ package net.runelite.client.plugins.microbot.cardewsPlugins.AIOCamdozaal;
 
 import com.google.common.collect.ImmutableSet;
 import net.runelite.api.ItemID;
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.*;
 import net.runelite.api.ItemID;
 import net.runelite.client.plugins.grounditems.GroundItem;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ConfigGroup("AIOCamdozaal")
+@ConfigInformation("<center>Golem fighter praying not implemented yet.<br>But it should fight golems handling eating/looting/banking fine.</center>")
 public interface AIOCamdozConfig extends Config {
     /*@ConfigItem(
             keyName = "Ore",
