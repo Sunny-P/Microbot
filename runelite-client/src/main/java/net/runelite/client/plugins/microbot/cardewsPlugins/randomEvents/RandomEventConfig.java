@@ -4,15 +4,15 @@ import net.runelite.client.config.*;
 import net.runelite.client.plugins.microbot.globval.enums.Skill;
 
 @ConfigGroup("RandomEvent")
-@ConfigInformation("Handled Events: \nBeekeeper, Count Check, Drill Demon, Genie, Gravedigger, Sandwich lady")
+@ConfigInformation("Handled Events: <br>Beekeeper, Count Check, Drill Demon, Genie, Gravedigger, Sandwich lady<br>Also handles xp lamps received.")
 public interface RandomEventConfig extends Config {
-    @ConfigItem(
-            name = "Disable Auto Continue Dialogue",
-            keyName = "disableAutoContinue",
-            position = 0,
-            description = "Disables auto continue dialogue"
-    )
-    default boolean disableAutoContinue() { return false; }
+    //@ConfigItem(
+    //        name = "Disable Auto Continue Dialogue",
+    //        keyName = "disableAutoContinue",
+    //        position = 0,
+    //        description = "Disables auto continue dialogue. Only enable if you have conflicts with other plugins such as QoL's Auto continue dialogue feature."
+    //)
+    //default boolean disableAutoContinue() { return false; }
 
     @ConfigItem(
             name = "Skill XP Reward",

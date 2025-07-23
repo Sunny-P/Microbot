@@ -98,7 +98,7 @@ public class CardewSlayerScript extends Script {
                 // Will log/print if there is no master selected, so they know to correct their spelling if need be
                 // This will not interrupt other parts of the script
                 if (currentMaster == SlayerMaster.NONE) {
-                    currentMaster = GetSlayerMasterFromConfig(config);
+                    currentMaster = config.SlayerMaster();
                 }
                 // Handle eating food outside the state machine
                 if (!Rs2Player.eatAt(config.EatFoodPercent()))
@@ -131,9 +131,10 @@ public class CardewSlayerScript extends Script {
         return true;
     }
 
-    SlayerMaster GetSlayerMasterFromConfig(CardewSlayerConfig _config) {
+    // Old method when a String was used for Slayer Master name
+    SlayerMaster GetSlayerMasterFromConfigString(CardewSlayerConfig _config) {
         for (SlayerMaster master : SlayerMaster.values()) {
-            if (master.getName().equalsIgnoreCase(_config.SlayerMaster())) {
+            if (master.getName().equalsIgnoreCase(_config.SlayerMaster().getName())) {
                 return master;
             }
         }

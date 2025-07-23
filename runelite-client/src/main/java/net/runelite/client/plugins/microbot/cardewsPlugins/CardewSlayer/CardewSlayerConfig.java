@@ -13,7 +13,7 @@ public interface CardewSlayerConfig extends Config{
             position = 0,
             description = "Select your Slayer Master"
     )
-    default String SlayerMaster() { return SlayerMaster.TURAEL.getName(); }
+    default SlayerMaster SlayerMaster() { return SlayerMaster.TURAEL; }
 
     @ConfigSection(
             name = "Task Alternatives",
