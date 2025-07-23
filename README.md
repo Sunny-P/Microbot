@@ -8,6 +8,25 @@ Microbot is an opensource oldschool runescape client based on runelite. It uses 
 
 [![image](https://github.com/user-attachments/assets/f15ec853-9b92-474e-a269-9a984e8bb792)](https://www.youtube.com/channel/UCEj_7N5OPJkdDi0VTMOJOpw)
 
+## My contributions include
+### AutoBankPink plugin: 
+     - Automatically enters your bank pin whenever prompted.
+     - Microbot class static boolean bankPinBeingHandled added to allow other plugins to respect when a bank pin needs to get entered.
+### AIO Camdozaal Plugin:
+     - Automates mining & smithing, fishing & processing, and basic fighting golems in Camdozaal. Does not do the vault activity.
+### LineFiremaker Plugin:
+     - My own firemaking plugin made as a coding exercise.
+     - Does basic line firemaking. Needs space to burn 27 logs, from a starting position traveling West.
+### RandomEvent Plugin:
+     - One of my first plugins I made while learning the Microbot and Runelite APIs.
+     - Handles random events when they spawn.
+     - Events handled: Beekeeper, Count Check, Drill Demon, Genie, Gravedigger, & Sandwich lady events.
+     - Handles XP lamps received. Choose which skill put xp in.
+### Slayer Plugin:
+     - A start at a larger plugin.
+     - Currently handles getting a task from a master, banks for food and some required items, slays monsters (banking as needed), and repeats.
+     - Only has tasks for Turael implemented. If another master has a same task as Turael, then it's possible it will do it; but only Turaels task monsters are implemented so far.
+
 ## Discord
 
 [![Discord Banner 1](https://discord.com/api/guilds/1087718903985221642/widget.png?style=banner1)](https://discord.gg/zaGrfqFEWE)
