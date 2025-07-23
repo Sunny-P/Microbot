@@ -49,6 +49,7 @@ public class AutoMiningScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (Rs2AntibanSettings.actionCooldownActive) return;
                 if (Microbot.handlingRandomEvent) return;
+                if (Microbot.bankPinBeingHandled) return;
                 if (initialPlayerLocation == null) {
                     initialPlayerLocation = Rs2Player.getWorldLocation();
                 }
