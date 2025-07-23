@@ -4,6 +4,8 @@ import net.runelite.api.NPC;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -11,6 +13,8 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
+import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
+import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
@@ -21,7 +25,12 @@ import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 
 
 public class RandomEventScript extends Script {
@@ -44,6 +53,7 @@ public class RandomEventScript extends Script {
 
     public boolean run(RandomEventConfig config) {
         Microbot.enableAutoRunOn = false;
+        //activeEvent = RandomEvent.GRAVEDIGGER;
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
@@ -54,10 +64,20 @@ public class RandomEventScript extends Script {
 
                 if (HandleXPLamp(config)) return;
 
+                // Warning pop up for dropped items.
+                // Tested gravedigger event multiple times, shouldn't have left items on ground
+                if (Rs2Widget.isWidgetVisible(566, 18))
+                {
+                    if (Rs2Widget.getWidget(566, 18).getText().contains("I haven't left any valuables on the floor"))
+                    {
+                        Rs2Widget.clickWidget(566, 18);
+                    }
+                    return;
+                }
+
                 HandleRandomEvents(config);
 
-                if (!Microbot.handlingRandomEvent) return;
-                // Dialogue will only be continued if we do not disable the option
+                if (config.disableAutoContinue()) return;
                 if (Rs2Dialogue.hasContinue())
                 {
                     Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
@@ -897,31 +917,75 @@ public class RandomEventScript extends Script {
     boolean grave5Fixed = false;
     boolean graveEventFinished = false;
 
+    int numItemsToDrop = -99;
+    List<Integer> droppedItemIDs = new ArrayList<>();
+    Dictionary<Integer, String> droppedItemMapIdtoString = new Dictionary<Integer, String>() {
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public Enumeration<Integer> keys() {
+            return null;
+        }
+
+        @Override
+        public Enumeration<String> elements() {
+            return null;
+        }
+
+        @Override
+        public String get(Object key) {
+            return "";
+        }
+
+        @Override
+        public String put(Integer key, String value) {
+            return "";
+        }
+
+        @Override
+        public String remove(Object key) {
+            return "";
+        }
+    };
+    int listIterator = 0;
+
     private void HandleGravediggerEvent()
     {
-        if (Rs2Dialogue.hasSelectAnOption())
+        if (Rs2Inventory.emptySlotCount() < 5 && numItemsToDrop == -99)
         {
+            numItemsToDrop = 5 - Rs2Inventory.emptySlotCount();
 
-            if (graveEventFinished)
+            for (int i = 0; i < numItemsToDrop; i++)
             {
-                // Replace keyboard event with Select Option "I'm done mate or whatever"
-                Rs2Keyboard.keyPress('1');
-                activeEvent = RandomEvent.NONE;
-                graveEventFinished = false;
-                Microbot.handlingRandomEvent = false;
+                int thisSlotObjectID = Rs2Inventory.getIdForSlot(i + 1);
+                droppedItemIDs.add(thisSlotObjectID);
+                droppedItemMapIdtoString.put(thisSlotObjectID, Rs2Inventory.getNameForSlot(i + 1));
+                Rs2Inventory.drop(thisSlotObjectID);
+                Rs2Inventory.waitForInventoryChanges(10000);
             }
-            else
-            {
-                // Replace keyboard event with Select Option "Yeah, let's do it. I'll fix ya grave mate"
-                Rs2Keyboard.keyPress('1');
-            }
+            return;
         }
-        else if (Rs2Dialogue.isInDialogue())
+        if (Rs2Dialogue.isInDialogue())
         {
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
 
             if (graveEventFinished)
             {
+                // Replace keyboard event with Select Option "I'm done mate or whatever"
+                Rs2Keyboard.keyPress('1');
+                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                activeEvent = RandomEvent.NONE;
+                graveEventFinished = false;
+                Microbot.handlingRandomEvent = false;
+
                 gravestone1Profession = null;
                 gravestone2Profession = null;
                 gravestone3Profession = null;
@@ -937,6 +1001,49 @@ public class RandomEventScript extends Script {
                 grave3Fixed = false;
                 grave4Fixed = false;
                 grave5Fixed = false;
+
+                numItemsToDrop = -99;
+                droppedItemIDs.clear();
+                listIterator = 0;
+            }
+        }
+        else if (Rs2Dialogue.hasSelectAnOption())
+        {
+            Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+
+            if (graveEventFinished)
+            {
+                // Replace keyboard event with Select Option "I'm done mate or whatever"
+                Rs2Keyboard.keyPress('1');
+                activeEvent = RandomEvent.NONE;
+                Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                graveEventFinished = false;
+                Microbot.handlingRandomEvent = false;
+
+                gravestone1Profession = null;
+                gravestone2Profession = null;
+                gravestone3Profession = null;
+                gravestone4Profession = null;
+                gravestone5Profession = null;
+                grave1Looted = false;
+                grave2Looted = false;
+                grave3Looted = false;
+                grave4Looted = false;
+                grave5Looted = false;
+                grave1Fixed = false;
+                grave2Fixed = false;
+                grave3Fixed = false;
+                grave4Fixed = false;
+                grave5Fixed = false;
+
+                numItemsToDrop = -99;
+                droppedItemIDs.clear();
+                listIterator = 0;
+            }
+            else
+            {
+                // Replace keyboard event with Select Option "Yeah, let's do it. I'll fix ya grave mate"
+                Rs2Keyboard.keyPress('1');
             }
         }
         else
@@ -1033,26 +1140,31 @@ public class RandomEventScript extends Script {
                     if (!grave1Looted)
                     {
                         Rs2GameObject.interact(9365, "Take-Coffin");
+                        Rs2Inventory.waitForInventoryChanges(10000);
                         grave1Looted = true;
                     }
                     else if (!grave2Looted)
                     {
                         Rs2GameObject.interact(9367, "Take-Coffin");
+                        Rs2Inventory.waitForInventoryChanges(10000);
                         grave2Looted = true;
                     }
                     else if (!grave3Looted)
                     {
                         Rs2GameObject.interact(9364, "Take-Coffin");
+                        Rs2Inventory.waitForInventoryChanges(10000);
                         grave3Looted = true;
                     }
                     else if (!grave4Looted)
                     {
                         Rs2GameObject.interact(9366, "Take-Coffin");
+                        Rs2Inventory.waitForInventoryChanges(10000);
                         grave4Looted = true;
                     }
                     else if (!grave5Looted)
                     {
                         Rs2GameObject.interact(10049, "Take-Coffin");
+                        Rs2Inventory.waitForInventoryChanges(10000);
                         grave5Looted = true;
                     }
                     else if (!grave1Fixed)
@@ -1088,7 +1200,24 @@ public class RandomEventScript extends Script {
                     }
                     else
                     {
+                        if (!droppedItemIDs.isEmpty() && listIterator < droppedItemIDs.size() - 1)
+                        {
+                            LootingParameters itemParams = new LootingParameters(
+                                    10,
+                                    1,
+                                    1,
+                                    1,
+                                    false,
+                                    true,
+                                    droppedItemMapIdtoString.get(droppedItemIDs.get(listIterator))
+                            );
+                            Rs2GroundItem.lootItemsBasedOnNames(itemParams);
+                            Rs2Inventory.waitForInventoryChanges(10000);
+                            listIterator++;
+                            return;
+                        }
                         Rs2Npc.interact("Leo", "Talk-to");
+                        Rs2Dialogue.sleepUntilInDialogue();
                         graveEventFinished = true;
                     }
                 }
