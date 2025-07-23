@@ -23,6 +23,7 @@ Microbot is an opensource oldschool runescape client based on runelite. It uses 
      - Handles random events when they spawn.
      - Events handled: Beekeeper, Count Check, Drill Demon, Genie, Gravedigger, & Sandwich lady events.
      - Handles XP lamps received. Choose which skill put xp in.
+     - Microbot class static boolean handlingRandomEvent to allow other plugins to respect when this plugin wants to handle an event.
 ### Slayer Plugin:
      - A start at a larger plugin.
      - Currently handles getting a task from a master, banks for food and some required items, slays monsters (banking as needed), and repeats.
