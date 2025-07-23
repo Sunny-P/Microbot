@@ -13,8 +13,9 @@ Microbot is an opensource oldschool runescape client based on runelite. It uses 
      - Automatically enters your bank pin whenever prompted.
      - Microbot class static boolean bankPinBeingHandled added to allow other plugins to respect when a bank pin needs to get entered.
 ### AIO Camdozaal Plugin:
-     - Automates mining & smithing, fishing & processing, and basic fighting golems in Camdozaal. Does not do the vault activity.
-### LineFiremaker Plugin:
+     - Automates mining & smithing, fishing & processing, and basic fighting golems in Camdozaal. 
+     - Does not do the vault activity.
+### Line Firemaker Plugin:
      - My own firemaking plugin made as a coding exercise.
      - Does basic line firemaking. Needs space to burn 27 logs, from a starting position traveling West.
 ### RandomEvent Plugin:
