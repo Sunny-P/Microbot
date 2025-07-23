@@ -8,7 +8,7 @@ Microbot is an opensource oldschool runescape client based on runelite. It uses 
 
 [![image](https://github.com/user-attachments/assets/f15ec853-9b92-474e-a269-9a984e8bb792)](https://www.youtube.com/channel/UCEj_7N5OPJkdDi0VTMOJOpw)
 
-## My contributions include
+## My (Cardew's) contributions include
 ### AutoBankPink plugin: 
      - Automatically enters your bank pin whenever prompted.
      - Microbot class static boolean bankPinBeingHandled added to allow other plugins to respect when a bank pin needs to get entered.
