@@ -70,7 +70,6 @@ public @interface PluginDescriptor
 	String Funk = "<html>[<font color=#ffff1a>\uD83C\uDF19</font>] ";
 	String Cardew = "<html>[<font color=#824BA3>CD</font>]";
 
-
 	String name();
 
 	/**
