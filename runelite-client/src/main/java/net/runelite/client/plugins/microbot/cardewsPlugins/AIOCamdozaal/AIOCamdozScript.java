@@ -5,10 +5,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
-import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerScript;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
-import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
@@ -19,7 +17,6 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
-import net.runelite.client.plugins.microbot.util.misc.Rs2Potion;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -108,7 +105,7 @@ public class AIOCamdozScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, 600, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -201,16 +198,9 @@ public class AIOCamdozScript extends Script {
                 // Look at our chosen rock
                 if (!mineableRocks.isEmpty())
                 {
-                    //double chanceRoll = Math.random();
-                    //if (chanceRoll > 0.3) {
-                    LocalPoint playerLocal = Rs2Player.getLocalLocation();
                     LocalPoint mineLocation = mineableRocks.get(0).getLocalLocation();
-                    int midX, midY;
-                    midX = (playerLocal.getSceneX() + mineLocation.getSceneX()) / 2;
-                    midY = (playerLocal.getSceneY() + mineLocation.getSceneY()) / 2;
-                    LocalPoint midPoint = new LocalPoint(midX, midY);
 
-                    Rs2Camera.turnTo(midPoint);
+                    Rs2Camera.turnTo(mineLocation);
                     if (Rs2Camera.cameraPitchPercentage() < 0.75f)
                     {
                         Rs2Camera.adjustPitch(0.75f);
@@ -230,18 +220,20 @@ public class AIOCamdozScript extends Script {
                             mineableRocks.clear();
                             if (lastInteractedBarroniteID == ObjectID.BARRONITE_ROCKS) {
                                 //System.out.println(("Last Interacted Rock: LEFT Barronite Vein"));
-                                for (int i = 0; i < miningObjectIDsReverse.length; ++i) {
+                                for (int miningObjectID : miningObjectIDsReverse) {
                                     //for (int j = 0; j < barroniteLocations.size(); ++j)
                                     //{
-                                    mineableRocks.addAll(Rs2GameObject.getWallObjects(miningObjectIDsReverse[i]));
+                                    //mineableRocks.addAll(Rs2GameObject.getWallObjects(miningObjectID));
+                                    mineableRocks.addAll(Rs2GameObject.getWallObjects(object -> object != null && (object.getId() == ObjectID.BARRONITE_ROCKS_41548)));
                                     //}
                                 }
                             } else if (lastInteractedBarroniteID == ObjectID.BARRONITE_ROCKS_41548) {
                                 //System.out.println(("Last Interacted Rock: RIGHT Barronite Vein"));
-                                for (int i = 0; i < miningObjectIDs.length; ++i) {
+                                for (int miningObjectID : miningObjectIDs) {
                                     //for (int j = 0; j < barroniteLocations.size(); ++j)
                                     //{
-                                    mineableRocks.addAll(Rs2GameObject.getWallObjects(miningObjectIDs[i]));
+                                    //mineableRocks.addAll(Rs2GameObject.getWallObjects(miningObjectID));
+                                    mineableRocks.addAll(Rs2GameObject.getWallObjects(object -> object != null && (object.getId() == ObjectID.BARRONITE_ROCKS)));
                                     //}
                                 }
                             }
@@ -436,13 +428,13 @@ public class AIOCamdozScript extends Script {
             case WALKING_TO_FISH:
                 if (Rs2Inventory.isFull())
                 {
-                    if (Rs2Inventory.hasItem(ItemID.RAW_GUPPY))
+                    if (Rs2Inventory.hasItem(ItemID.RAW_GUPPY) || Rs2Inventory.hasItem(ItemID.RAW_CAVEFISH) || Rs2Inventory.hasItem(ItemID.RAW_TETRA))
                     {
                         state = State.PROCESSING;
                         break;
                     }
                 }
-                if (!Rs2Inventory.hasItem(ItemID.SMALL_FISHING_NET))
+                if (!Rs2Inventory.hasItem(netToUse))
                 {
                     state = State.WALKING_TO_BANK;
                     break;
@@ -495,7 +487,7 @@ public class AIOCamdozScript extends Script {
                     if (!processTwice) {
                         if (Rs2Player.getAnimation() != AnimationID.COOKING_RANGE) {
                             if (Rs2Inventory.hasItem(ItemID.RAW_GUPPY) || Rs2Inventory.hasItem(ItemID.RAW_CAVEFISH)
-                                    || Rs2Inventory.hasItem(ItemID.RAW_TETRA)) {
+                                    || Rs2Inventory.hasItem(ItemID.RAW_TETRA) || Rs2Inventory.hasItem(ItemID.RAW_CATFISH)) {
                                 if (Rs2Widget.isProductionWidgetOpen()) {
                                     Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
                                     Rs2Player.waitForXpDrop(Skill.COOKING, 3000);
@@ -516,12 +508,12 @@ public class AIOCamdozScript extends Script {
                         if (Rs2Player.getAnimation() != AnimationID.USING_GILDED_ALTAR)
                         {
                             if (Rs2Inventory.hasItem(ItemID.RUINED_GUPPY) || Rs2Inventory.hasItem(ItemID.RUINED_CAVEFISH)
-                                    || Rs2Inventory.hasItem(ItemID.RUINED_TETRA))
+                                    || Rs2Inventory.hasItem(ItemID.RUINED_TETRA) || Rs2Inventory.hasItem(ItemID.RUINED_CATFISH))
                             {
-                                Rs2Inventory.dropAll(ItemID.RUINED_GUPPY, ItemID.RUINED_CAVEFISH, ItemID.RUINED_TETRA);
+                                Rs2Inventory.dropAll(ItemID.RUINED_GUPPY, ItemID.RUINED_CAVEFISH, ItemID.RUINED_TETRA, ItemID.RUINED_CATFISH);
                             }
                             else if (Rs2Inventory.hasItem(ItemID.GUPPY) || Rs2Inventory.hasItem(ItemID.CAVEFISH)
-                                    || Rs2Inventory.hasItem(ItemID.TETRA))
+                                    || Rs2Inventory.hasItem(ItemID.TETRA) || Rs2Inventory.hasItem(ItemID.CATFISH))
                             {
                                 if (Rs2Widget.isProductionWidgetOpen())
                                 {
@@ -585,10 +577,7 @@ public class AIOCamdozScript extends Script {
 
                 if (!Rs2Bank.isOpen())
                 {
-                    if (!Rs2Widget.isWidgetVisible(213, 0))
-                    {
-                        Rs2Bank.openBank();
-                    }
+                    Rs2Bank.openBank();
                 }
                 else
                 {
@@ -713,9 +702,35 @@ public class AIOCamdozScript extends Script {
                     state = State.WALKING_TO_BANK;
                 }
 
+                golemsAttackingPlayer = Rs2Npc.getNpcsForPlayer().collect(Collectors.toList());
+
                 if (!Rs2Combat.inCombat())
                 {
-                    //golems = Rs2Npc.getAttackableNpcs(_golemName).collect(Collectors.toList());
+                    // Not in combat
+                    if (!golemsAttackingPlayer.isEmpty())
+                    {
+                        Microbot.log("Not in combat. golemsAttackingPlayer list is NOT empty.");
+                        Microbot.log("List: " + golemsAttackingPlayer);
+                        // Filter by things with an Attack option
+                        Rs2NpcModel targetGolem = golemsAttackingPlayer.stream()
+                                .filter(npc -> npc.getComposition() != null &&
+                                        Arrays.stream(npc.getComposition().getActions())
+                                                .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
+                                .findFirst().orElse(null);
+
+                        if (targetGolem != null)
+                        {
+                            if (!Rs2Camera.isTileOnScreen(targetGolem.getLocalLocation()))
+                            {
+                                Rs2Camera.turnTo(targetGolem);
+                            }
+
+                            Rs2Npc.interact(targetGolem, "Attack");
+                            Rs2Antiban.actionCooldown();
+                        }
+                        break;
+                    }
+
                     golems = Rs2Npc.getNpcs(_golemID).collect(Collectors.toList());
                     rubbles = Rs2Npc.getNpcs(_rubbleID).collect(Collectors.toList());
 
@@ -749,11 +764,6 @@ public class AIOCamdozScript extends Script {
                         }
 
                     }
-                }
-                else
-                {
-                    //Rs2Antiban.moveMouseRandomly();
-                    //Rs2Antiban.moveMouseOffScreen();
                 }
                 break;
 

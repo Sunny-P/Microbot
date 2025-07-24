@@ -10,18 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ConfigGroup("AIOCamdozaal")
-@ConfigInformation("<center>Golem fighter praying not implemented yet.<br>But it should fight golems handling eating/looting/banking fine.</center>")
+@ConfigInformation("<center>Mine & Smith: Handles mining and crushing barronite." +
+        "<br>Fish & Cook: Fishes and processes the fish for prayer xp." +
+        "<br>Fight Golem: Basic fight and loot functionality. </center>")
 public interface AIOCamdozConfig extends Config {
-    /*@ConfigItem(
-            keyName = "Ore",
-            name = "Ore",
-            description = "Choose the ore",
-            position = 0
-    )
-    default List<String> ORE()
-    {
-        return Rocks.TIN;
-    }*/
 
     enum Activities{
         MINE_AND_SMITH,
@@ -152,15 +144,6 @@ public interface AIOCamdozConfig extends Config {
             section = golemFighterSettingSection
     )
     default int NumberOfFood() { return 5; }
-
-    @ConfigItem(
-            name = "Auto Pray",
-            keyName = "autoPray",
-            description = "[NOT YET IMPLEMENTED] Whether the plugin prays against the golems",
-            position = 6,
-            section = golemFighterSettingSection
-    )
-    default PrayType AutoPray() { return PrayType.OFF; }
 
     @ConfigItem(
             name = "Eat Food at HP %",

@@ -287,8 +287,8 @@ public class CardewSlayerScript extends Script {
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
-                                .filter(npc -> Arrays.stream(npc.getComposition().getActions())
-                                        .anyMatch(action -> action.contains("Attack")))
+                                .filter(npc -> npc.getComposition()!= null && Arrays.stream(npc.getComposition().getActions())
+                                        .anyMatch(action -> action.toLowerCase().contains("attack")))
                                 .findFirst().orElse(null);
 
                         assert target != null;
