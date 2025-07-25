@@ -90,7 +90,7 @@ public class MotherloadMineScript extends Script
 
     private void executeTask()
     {
-        if (!super.run() || !Microbot.isLoggedIn())
+        if (!super.run() || !Microbot.isLoggedIn() || Microbot.handlingRandomEvent)
         {
             resetMiningState();
             return;
