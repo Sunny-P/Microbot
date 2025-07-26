@@ -12,6 +12,7 @@ import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
+import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -170,7 +171,7 @@ public class VarrockAnvilScript extends Script {
     private void determineState(Bars barType, AnvilItem anvilItem) {
         debug("Determine state");
 
-        if (Rs2Inventory.hasItemAmount(barType.toString(), anvilItem.getRequiredBars()) && Rs2Inventory.hasItem(ItemID.HAMMER)) {
+        if (Rs2Inventory.hasItemAmount(barType.toString(), anvilItem.getRequiredBars()) && (Rs2Inventory.hasItem(ItemID.HAMMER) || Rs2Equipment.isWearing("hammer", false))) {
             if (!Functions.closeToLocation(AnvilLocation)) {
                 state = State.WALK_TO_ANVIL;
                 debug("Walking to anvil");
@@ -198,7 +199,7 @@ public class VarrockAnvilScript extends Script {
             debug("Items deposited");
             sleep(180, 540);
 
-            if (!Rs2Inventory.hasItem(ItemID.HAMMER)) {
+            if (!Rs2Inventory.hasItem(ItemID.HAMMER) && !Rs2Equipment.isWearing("hammer", false)) {
                 Rs2Bank.withdrawOne(ItemID.HAMMER);
                 sleepUntil(() -> Rs2Inventory.hasItem(ItemID.HAMMER), 3500);
 
