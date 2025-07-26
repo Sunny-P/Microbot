@@ -74,7 +74,7 @@ public class CardewSlayerScript extends Script {
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
-        CUtil.SetMyAntiban(0.0);
+        CUtil.SetMyAntiban(0.0, 2, 15, 0.4);
 
         slayerGemChecked = false;
         lootBanked = false;
