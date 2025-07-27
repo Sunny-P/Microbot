@@ -537,7 +537,7 @@ public class TemporossScript extends Script {
     }
 
     private void handleDamagedMast() {
-        if (Rs2Player.isMoving() || Rs2Player.isInteracting() || (temporossConfig.hammer() && (!Rs2Inventory.contains("Hammer") || !Rs2Inventory.hasItem("Imcando hammer", false) || !Rs2Equipment.isWearing("Imcando hammer", false))) || !temporossConfig.hammer())
+        if (Rs2Player.isMoving() || Rs2Player.isInteracting() || (temporossConfig.hammer() && (!Rs2Inventory.contains("Hammer") || !Rs2Equipment.isWearing("Imcando hammer", false))) || !temporossConfig.hammer())
             return;
 
         TileObject damagedMast = workArea.getBrokenMast();
@@ -553,7 +553,7 @@ public class TemporossScript extends Script {
     }
 
     private void handleDamagedTotem() {
-        if (Rs2Player.isMoving() || Rs2Player.isInteracting() || (temporossConfig.hammer() && !Rs2Inventory.contains("Hammer")) || !temporossConfig.hammer())
+        if (Rs2Player.isMoving() || Rs2Player.isInteracting() || (temporossConfig.hammer() && (!Rs2Inventory.contains("Hammer") || !Rs2Equipment.isWearing("Imcando hammer", false))) || !temporossConfig.hammer())
             return;
 
         TileObject damagedTotem = workArea.getBrokenTotem();
