@@ -2,6 +2,7 @@ package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
 import net.runelite.client.config.*;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
+import net.runelite.client.plugins.microbot.inventorysetups.InventorySetup;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 
 @ConfigGroup("CardewSlayer")
@@ -58,6 +59,14 @@ public interface CardewSlayerConfig extends Config{
             section = taskAlternativeSection
     )
     default CUtil.AlternativeWolfTask AlternativeWolfTask() { return CUtil.AlternativeWolfTask.WHITE_WOLF_LVL25; }
+
+    @ConfigItem(
+            name = "Inventory Setup to Use",
+            keyName = "inventorySetupToUse",
+            position = 2,
+            description = "The InventorySetup to load equipment/inventory from"
+    )
+    default InventorySetup InventorySetup() { return null; }
 
     @ConfigItem(
             name = "Eat Food %",

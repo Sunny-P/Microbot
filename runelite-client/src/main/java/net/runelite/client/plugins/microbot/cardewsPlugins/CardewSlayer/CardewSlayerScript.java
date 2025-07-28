@@ -7,7 +7,6 @@ import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
-import net.runelite.client.plugins.microbot.globval.enums.Skill;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.Rs2InventorySetup;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
@@ -21,21 +20,17 @@ import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
-import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
-import net.runelite.client.plugins.microbot.util.slayer.Rs2Slayer;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
-import net.runelite.client.plugins.slayer.SlayerPlugin;
 import org.slf4j.event.Level;
 
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,6 +70,7 @@ public class CardewSlayerScript extends Script {
     boolean slayerGemChecked = false;
     boolean lootBanked = false;
     boolean lightingLightSource = false;
+    boolean equippedRequiredItem = false;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -83,6 +79,7 @@ public class CardewSlayerScript extends Script {
         slayerGemChecked = false;
         lootBanked = false;
         lightingLightSource = false;
+        equippedRequiredItem = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -172,6 +169,14 @@ public class CardewSlayerScript extends Script {
                 }
 
                 CheckForAndOpenSeedbox();
+
+                if (slayerTarget != CUtil.SlayerTarget.NONE && killsLeft > 0)
+                {
+                    // We managed to get into this iteration of MOVING_TO_SLAYER_MASTER code
+                    // with a recognised task, because we used the gem to check.
+                    // Let it resolve it's state in DetermineStateFromSlayerTask() called from UpdateSlayerTaskFromGemText()
+                    break;
+                }
 
                 if (currentMaster == SlayerMaster.NONE) {
                     Microbot.log("CardewSlayer: No Slayer Master!");
@@ -302,8 +307,9 @@ public class CardewSlayerScript extends Script {
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
-                                .filter(npc -> npc.getComposition()!= null && Arrays.stream(npc.getComposition().getActions())
-                                        .anyMatch(action -> action.toLowerCase().contains("attack")))
+                                .filter(npc -> npc.getComposition() != null &&
+                                        Arrays.stream(npc.getComposition().getActions())
+                                                .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
                                 .findFirst().orElse(null);
 
                         assert target != null;
@@ -378,7 +384,7 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case MOVING_TO_NEAREST_BANK:
-                if (Rs2Walker.walkWithBankedTransports(Rs2Bank.getNearestBank().getWorldPoint()))
+                if (Rs2Walker.walkTo(Rs2Bank.getNearestBank().getWorldPoint()))
                 {
                     currentState = States.BANKING;
                 }
@@ -391,11 +397,106 @@ public class CardewSlayerScript extends Script {
                 }
                 else
                 {
+                    // We are regearing/banking loot for a current task
+                    if (killsLeft > 0)
+                    {
+                        // Check if our task has any requirements in the first place
+                        List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
+                        if (!requiredItemsList.get(0).equalsIgnoreCase("none"))
+                        {
+                            boolean requireSlayerHelm = true;
+
+                            for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
+                            {
+                                Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
+                                if (Rs2Bank.hasItem(requiredItem) && !Rs2Inventory.hasItem(requiredItem))
+                                {
+                                    // If our required item is a Slayer helm component
+                                    // Only withdraw these if we don't have a slayer helm
+                                    if ((requiredItem.toLowerCase().contains("earmuffs") || requiredItem.toLowerCase().contains("facemask")
+                                            || requiredItem.toLowerCase().contains("nose peg") || requiredItem.toLowerCase().contains("spiny helmet"))
+                                            && !Rs2Bank.hasItem(ItemID.SLAYER_HELM))
+                                    {
+                                        requireSlayerHelm = false;
+
+                                        // If for some reason we are already wearing the required item
+                                        // Withdraw our item and continue to the next loop iteration
+                                        IsNotWearingItemThenWithdraw(requiredItem);
+                                        continue;
+                                    }
+
+                                    // Withdrawn regular non-case required item
+                                    // If we are already wearing the required item no need to withdraw
+                                    IsNotWearingItemThenWithdraw(requiredItem);
+                                }
+                                else if (requiredItem.toLowerCase().contains("bullseye lantern"))
+                                {
+                                    if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
+                                    {
+                                        Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
+                                    }
+                                    else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                    {
+                                        lightingLightSource = true;
+                                        if (Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                        {
+                                            Rs2Bank.withdrawOne(ItemID.TINDERBOX);
+
+                                            Rs2Bank.closeBank();
+                                            Global.sleepUntil(() -> !Rs2Bank.isOpen());
+
+                                            Rs2Inventory.use(ItemID.TINDERBOX);
+                                            Rs2Inventory.use(ItemID.BULLSEYE_LANTERN_UNLIT);
+
+                                            Rs2Bank.openBank();
+                                            Global.sleepUntil(Rs2Bank::isOpen);
+
+                                            Rs2Bank.depositItems(ItemID.TINDERBOX);
+                                            lightingLightSource = false;
+                                        }
+                                    }
+                                }
+                                else    // WE DO NOT HAVE THE REQUIRED ITEM IN THE BANK
+                                {
+                                    // If required item is a slayer helmet
+                                    if (requiredItem.toLowerCase().contains("slayer helm"))
+                                    {
+                                        // If we still need it, shutdown.
+                                        // This is changed to false if we have withdrawn something like a facemask/nose peg/etc instead of a helm.
+                                        if (requireSlayerHelm)
+                                        {
+                                            Microbot.log("Missing required item: " + requiredItem);
+                                            this.shutdown();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Microbot.log("Item not found!: " + requiredItem);
+                                        this.shutdown();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (!lootBanked)
                     {
-                        // Bank all loots and shit lol.
-                        // Temp deposit all for now
-                        Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem");
+                        if (_config.InventorySetup() != null && !equippedRequiredItem)
+                        {
+                            Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                            setup.loadEquipment();
+                            setup.loadInventory();
+                        }
+                        else if (_config.InventorySetup() != null)
+                        {
+                            Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                            setup.loadInventory();
+                        }
+                        else
+                        {
+                            // No inventory setup loaded
+                            Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem", "Dramen staff", "Herb sack", "Open herb sack");
+                        }
                         Rs2Inventory.interact(Seedbox.OPEN.getId(), "Empty");
                         lootBanked = true;
 
@@ -436,56 +537,6 @@ public class CardewSlayerScript extends Script {
                         }
                     }
 
-                    // Check if our task has any requirements in the first place
-                    List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
-                    if (!requiredItemsList.get(0).equalsIgnoreCase("none"))
-                    {
-                        for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
-                        {
-                            Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
-                            if (Rs2Bank.hasItem(requiredItem))
-                            {
-                                Rs2Bank.withdrawOne(requiredItem);
-                            }
-                            else if (requiredItem.toLowerCase().contains("bullseye lantern"))
-                            {
-                                if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
-                                {
-                                    Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
-                                }
-                                else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
-                                {
-                                    lightingLightSource = true;
-                                    if (Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_UNLIT))
-                                    {
-                                        Rs2Bank.withdrawOne(ItemID.TINDERBOX);
-
-                                        Rs2Bank.closeBank();
-                                        Global.sleepUntil(() -> !Rs2Bank.isOpen());
-
-                                        Rs2Inventory.use(ItemID.TINDERBOX);
-                                        Rs2Inventory.use(ItemID.BULLSEYE_LANTERN_UNLIT);
-
-                                        Rs2Bank.openBank();
-                                        Global.sleepUntil(Rs2Bank::isOpen);
-
-                                        Rs2Bank.depositItems(ItemID.TINDERBOX);
-                                        lightingLightSource = false;
-                                    }
-                                }
-                                else
-                                {
-                                    Microbot.log("Missing required item!");
-                                    this.shutdown();
-                                }
-                            }
-                            else
-                            {
-                                Microbot.log("Item not found!");
-                                this.shutdown();
-                            }
-                        }
-                    }
                     currentState = States.MOVING_TO_MONSTER_LOCATION;
                     lootBanked = false;
                 }
@@ -498,6 +549,28 @@ public class CardewSlayerScript extends Script {
         if (Rs2Inventory.hasItem(Seedbox.CLOSED.getId()))
         {
             Rs2Inventory.interact(Seedbox.CLOSED.getId(), "Open");
+        }
+    }
+
+    /**
+     * Checks if we are not wearing the requiredItem,<br>
+     * Withdraws the item if we are not equipping it,<br>
+     * Attempts to equip the required item if equippable
+     *
+     * @param _requiredItem Required Item
+     */
+    void IsNotWearingItemThenWithdraw(String _requiredItem)
+    {
+        if (!Rs2Equipment.isWearing(_requiredItem, false))
+        {
+            //Rs2Bank.withdrawOne(_requiredItem);
+            if (Rs2Bank.withdrawAndEquip(_requiredItem))
+            {
+                // We did equip the item
+                // Flag lootBanked as false so we will bank any items we end up swapping out for required item
+                lootBanked = false;
+                equippedRequiredItem = true;
+            }
         }
     }
 
@@ -597,6 +670,7 @@ public class CardewSlayerScript extends Script {
     {
         currentState = States.MOVING_TO_SLAYER_MASTER;
         killsLeft = 0;
+        equippedRequiredItem = false;
         slayerTarget = CUtil.SlayerTarget.NONE;
         targetMonsterName = "";
         lootBanked = false;

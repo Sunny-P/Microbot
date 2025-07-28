@@ -87,7 +87,7 @@ public class CardewSlayerPlugin extends Plugin {
             // Our message from checking enchanted gem
             cardewSlayerScript.UpdateSlayerTaskFromGemText(chatMsg, config);
         }
-        else if (chatMsg.contains("You've completed your task!"))
+        else if (chatMsg.contains("You have completed your task!"))
         {
             cardewSlayerScript.SlayerTaskCompleted();
         }
