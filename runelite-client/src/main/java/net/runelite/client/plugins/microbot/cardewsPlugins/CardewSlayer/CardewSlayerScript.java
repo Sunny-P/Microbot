@@ -8,6 +8,8 @@ import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.globval.enums.Skill;
+import net.runelite.client.plugins.microbot.util.Global;
+import net.runelite.client.plugins.microbot.util.Rs2InventorySetup;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
@@ -23,6 +25,7 @@ import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.slayer.Rs2Slayer;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
@@ -32,6 +35,7 @@ import org.slf4j.event.Level;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,7 +74,7 @@ public class CardewSlayerScript extends Script {
     List<Rs2NpcModel> npcsInteractingWithPlayer = new ArrayList<>();
     boolean slayerGemChecked = false;
     boolean lootBanked = false;
-    boolean handleManualMovement = false;
+    boolean lightingLightSource = false;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -78,6 +82,7 @@ public class CardewSlayerScript extends Script {
 
         slayerGemChecked = false;
         lootBanked = false;
+        lightingLightSource = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -172,8 +177,8 @@ public class CardewSlayerScript extends Script {
                     Microbot.log("CardewSlayer: No Slayer Master!");
                     break;
                 }
-                WorldPoint cornerNW_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() - 2, currentMaster.getWorldPoint().getY() + 2, currentMaster.getWorldPoint().getPlane());
-                WorldPoint cornerSE_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() + 2, currentMaster.getWorldPoint().getY() - 2, currentMaster.getWorldPoint().getPlane());
+                WorldPoint cornerNW_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() - 8, currentMaster.getWorldPoint().getY() + 8, currentMaster.getWorldPoint().getPlane());
+                WorldPoint cornerSE_MTSM = new WorldPoint(currentMaster.getWorldPoint().getX() + 8, currentMaster.getWorldPoint().getY() - 8, currentMaster.getWorldPoint().getPlane());
 
                 if (!Rs2Walker.isInArea(cornerSE_MTSM, cornerNW_MTSM)) {
                     Rs2Walker.walkWithBankedTransports(currentMaster.getWorldPoint());
@@ -186,6 +191,12 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case GETTING_SLAYER_TASK:
+                if (!Objects.equals(targetMonsterName, ""))
+                {
+                    Microbot.log("targetMonsterName: " + targetMonsterName);
+                    DetermineStateFromSlayerTask(_config);
+                    break;
+                }
                 // Assuming we have no task
                 // Check if we have chat text widget active
                 if (Rs2Widget.isWidgetVisible(231, 6)) {
@@ -200,6 +211,8 @@ public class CardewSlayerScript extends Script {
                         // Gained killsLeft and monster data with this pattern method. I.E new task
                         killsLeft = Integer.parseInt(matcher.group(1));
                         targetMonsterName = matcher.group(2).trim();
+
+                        Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
 
                         if (Rs2Dialogue.hasContinue())
                         {
@@ -216,6 +229,8 @@ public class CardewSlayerScript extends Script {
                         if (secondMatcher.find()) {
                             targetMonsterName = secondMatcher.group(1).trim();
                             killsLeft = Integer.parseInt(secondMatcher.group(2));
+
+                            Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
 
                             if (Rs2Dialogue.hasContinue())
                             {
@@ -370,7 +385,7 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case BANKING:
-                if (!Rs2Bank.isOpen())
+                if (!Rs2Bank.isOpen() && !lightingLightSource)
                 {
                     Rs2Bank.openBank();
                 }
@@ -383,6 +398,13 @@ public class CardewSlayerScript extends Script {
                         Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem");
                         Rs2Inventory.interact(Seedbox.OPEN.getId(), "Empty");
                         lootBanked = true;
+
+                        if (killsLeft <= 0)
+                        {
+                            currentState = States.MOVING_TO_SLAYER_MASTER;
+                            lootBanked = false;
+                            break;
+                        }
                     }
                     // Check inv for and get all wanted items for slayer
                     if (!Rs2Inventory.hasItem(Seedbox.OPEN.getId(), Seedbox.CLOSED.getId()))
@@ -415,21 +437,57 @@ public class CardewSlayerScript extends Script {
                     }
 
                     // Check if our task has any requirements in the first place
-                    if (slayerTarget != CUtil.SlayerTarget.NONE)
+                    List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
+                    if (!requiredItemsList.get(0).equalsIgnoreCase("none"))
                     {
-                        if (slayerTarget.getMonsterData().getItemsRequired().length > 0)
+                        for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
                         {
+                            Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
+                            if (Rs2Bank.hasItem(requiredItem))
+                            {
+                                Rs2Bank.withdrawOne(requiredItem);
+                            }
+                            else if (requiredItem.toLowerCase().contains("bullseye lantern"))
+                            {
+                                if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
+                                {
+                                    Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
+                                }
+                                else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                {
+                                    lightingLightSource = true;
+                                    if (Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                    {
+                                        Rs2Bank.withdrawOne(ItemID.TINDERBOX);
 
+                                        Rs2Bank.closeBank();
+                                        Global.sleepUntil(() -> !Rs2Bank.isOpen());
+
+                                        Rs2Inventory.use(ItemID.TINDERBOX);
+                                        Rs2Inventory.use(ItemID.BULLSEYE_LANTERN_UNLIT);
+
+                                        Rs2Bank.openBank();
+                                        Global.sleepUntil(Rs2Bank::isOpen);
+
+                                        Rs2Bank.depositItems(ItemID.TINDERBOX);
+                                        lightingLightSource = false;
+                                    }
+                                }
+                                else
+                                {
+                                    Microbot.log("Missing required item!");
+                                    this.shutdown();
+                                }
+                            }
+                            else
+                            {
+                                Microbot.log("Item not found!");
+                                this.shutdown();
+                            }
                         }
-
-                        currentState = States.MOVING_TO_MONSTER_LOCATION;
-                        lootBanked = false;
                     }
-                    else
-                    {
-                        currentState = States.MOVING_TO_SLAYER_MASTER;
-                        lootBanked = false;
-                    }
+                    currentState = States.MOVING_TO_MONSTER_LOCATION;
+                    lootBanked = false;
                 }
                 break;
         }
@@ -452,6 +510,8 @@ public class CardewSlayerScript extends Script {
             targetMonsterName = matcher.group(1).trim();
             killsLeft = Integer.parseInt(matcher.group(2));
 
+            Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
+
             DetermineStateFromSlayerTask(_config);
         }
         else {
@@ -462,91 +522,62 @@ public class CardewSlayerScript extends Script {
 
     void DetermineStateFromSlayerTask(CardewSlayerConfig _config)
     {
+        Microbot.log("Entered DetermineStateFromSlayerTask()");
+
+        // Hard coded task value because I haven't interpretted plural words that are spelt differently, like wolves when the task is looking for wolf
+        if (targetMonsterName.toLowerCase().contains("wolves"))
+        {
+            slayerTarget = CUtil.SlayerTarget.WOLF;
+            slayerTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
+            currentState = States.MOVING_TO_NEAREST_BANK;
+            return;
+        }
+
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
-            boolean taskDeterminedFromAlternative = false;
-            switch (potentialTarget)
-            {
-                case NONE:
-                    continue;
-                case BIRD:
-                    potentialTarget.SetLocation(_config.AlternativeBirdTask().getLocation());
-
+            if (potentialTarget.getMonsterData() != null) {
+                Microbot.log("Potential Target: " + potentialTarget.getMonsterData().getMonster());
+                if (targetMonsterName.toLowerCase().contains(potentialTarget.getMonsterData().getMonster().toLowerCase())) {
                     slayerTarget = potentialTarget;
-                    taskDeterminedFromAlternative = true;
-                    break;
-                case DWARF:
-                    potentialTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
+                    Microbot.log("Assigned task contains potentialTarget.getMonster(): " + potentialTarget.getMonsterData().getMonster());
 
-                    slayerTarget = potentialTarget;
-                    taskDeterminedFromAlternative = true;
-                    break;
-                case KALPHITE:
-                    potentialTarget.SetLocation(_config.AlternativeKalphiteTask().getLocation());
+                    boolean taskDeterminedFromAlternative = false;
+                    switch (potentialTarget) {
+                        case NONE:
+                            continue;
+                        case BIRD:
+                            potentialTarget.SetLocation(_config.AlternativeBirdTask().getLocation());
 
-                    slayerTarget = potentialTarget;
-                    taskDeterminedFromAlternative = true;
-                    break;
-                case WOLF:
-                    potentialTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
+                            slayerTarget = potentialTarget;
+                            taskDeterminedFromAlternative = true;
+                            break;
+                        case DWARF:
+                            potentialTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
 
-                    slayerTarget = potentialTarget;
-                    taskDeterminedFromAlternative = true;
-                    break;
-            }
-            if (taskDeterminedFromAlternative)
-            {
-                currentState = States.MOVING_TO_NEAREST_BANK;
-                break;
-            }
-            if (targetMonsterName.contains(potentialTarget.getMonsterData().getMonster().toLowerCase())){
-                slayerTarget = potentialTarget;
+                            slayerTarget = potentialTarget;
+                            taskDeterminedFromAlternative = true;
+                            break;
+                        case KALPHITE:
+                            potentialTarget.SetLocation(_config.AlternativeKalphiteTask().getLocation());
 
-                // Do we have enough food?
-                int invFoodCount = Rs2Inventory.getInventoryFood().size();
-                if (invFoodCount < _config.NumberOfFood())
-                {
-                    currentState = States.MOVING_TO_MONSTER_LOCATION;
-                    break;
-                }
+                            slayerTarget = potentialTarget;
+                            taskDeterminedFromAlternative = true;
+                            break;
+                        case WOLF:
+                            potentialTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
 
-                if (slayerTarget.getMonsterData().getItemsRequired().length > 0)
-                {
-                    if (Rs2Equipment.isWearing(slayerTarget.getMonsterData().getItemsRequired()))
-                    {
-                        Microbot.log("Has required item in worn equipment.");
+                            slayerTarget = potentialTarget;
+                            taskDeterminedFromAlternative = true;
+                            break;
+                    }
+                    if (taskDeterminedFromAlternative) {
+                        Microbot.log("Task has alternative task location.");
                         currentState = States.MOVING_TO_NEAREST_BANK;
                         break;
                     }
-                    else if (Rs2Inventory.hasItem(slayerTarget.getMonsterData().getItemsRequired()))
-                    {
-                        boolean equippedItem = false;
-                        for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
-                        {
-                            if (Rs2Inventory.hasItem(requiredItem))
-                            {
-                                if (Rs2Inventory.wear(requiredItem))
-                                {
-                                    currentState = States.MOVING_TO_NEAREST_BANK;
-                                    equippedItem = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (equippedItem)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        //Microbot.log("No required item found in inventory or worn. Aborting.");
-                        //Microbot.showMessage("Required items: " + Arrays.toString(slayerTarget.getMonsterData().getItemsRequired()));
-                        //shutdown();
-                    }
-                }
 
-                currentState = States.MOVING_TO_NEAREST_BANK;
-                break;
+                    currentState = States.MOVING_TO_NEAREST_BANK;
+                    break;
+                }
             }
         }
     }
@@ -567,6 +598,7 @@ public class CardewSlayerScript extends Script {
         currentState = States.MOVING_TO_SLAYER_MASTER;
         killsLeft = 0;
         slayerTarget = CUtil.SlayerTarget.NONE;
+        targetMonsterName = "";
         lootBanked = false;
     }
 
@@ -640,6 +672,32 @@ public class CardewSlayerScript extends Script {
                     "Grimy "
             );
             Rs2GroundItem.lootItemsBasedOnNames(herbItemParams);
+        }
+
+        if (_config.PickupAndBuryBones())
+        {
+            LootingParameters boneItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    "bones"
+            );
+            Rs2GroundItem.lootItemsBasedOnNames(boneItemParams);
+
+            if (Rs2Inventory.hasItem("bones", false))
+            {
+                Rs2ItemModel boneItem = Rs2Inventory.get("bones", false);
+                for (String action : boneItem.getInventoryActions())
+                {
+                    if (action.equalsIgnoreCase("bury"))
+                    {
+                        Rs2Inventory.interact(boneItem, "bury");
+                    }
+                }
+            }
         }
     }
 }
