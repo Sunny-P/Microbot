@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
 import lombok.Getter;
+import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
@@ -70,7 +71,7 @@ public class CardewSlayerScript extends Script {
     boolean slayerGemChecked = false;
     boolean lootBanked = false;
     boolean lightingLightSource = false;
-    boolean equippedRequiredItem = false;
+    boolean hasRequiredItem = false;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -79,7 +80,7 @@ public class CardewSlayerScript extends Script {
         slayerGemChecked = false;
         lootBanked = false;
         lightingLightSource = false;
-        equippedRequiredItem = false;
+        hasRequiredItem = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -311,6 +312,7 @@ public class CardewSlayerScript extends Script {
                                         Arrays.stream(npc.getComposition().getActions())
                                                 .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
                                 .findFirst().orElse(null);
+                        Microbot.log("Target: " + target);
 
                         assert target != null;
                         if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
@@ -325,9 +327,23 @@ public class CardewSlayerScript extends Script {
                     {
                         // We don't have any monsters currently in combat with us
                         // Pick a fresh target
-                        targetList = Rs2Npc.getAttackableNpcs()
-                                .filter(npc -> npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
-                                .collect(Collectors.toList());
+                        if (slayerTarget == CUtil.SlayerTarget.KALPHITE)
+                        {
+                            targetList = Rs2Npc.getAttackableNpcs()
+                                    .filter(npc -> npc != null
+                                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                            && npc.getName() != null && npc.getName().toLowerCase().contains(_config.AlternativeKalphiteTask().getMonsterName().toLowerCase()))
+                                    .collect(Collectors.toList());
+                        }
+                        else
+                        {
+                            targetList = Rs2Npc.getAttackableNpcs()
+                                    .filter(npc -> npc != null
+                                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                            && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
+                                    .collect(Collectors.toList());
+                        }
+                        Microbot.log("TargetList: " + targetList);
 
                         if (!targetList.isEmpty())
                         {
@@ -357,7 +373,7 @@ public class CardewSlayerScript extends Script {
                         {
                             case LIZARD:
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
-                                        .filter(npc -> npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
+                                        .filter(npc -> npc != null && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
                                         .findFirst().orElse(null);
                                 assert inCombatNpc != null;
                                 switch (inCombatNpc.getId())
@@ -373,6 +389,7 @@ public class CardewSlayerScript extends Script {
                                             if (inCombatNpc.getHealthRatio() < 4)
                                             {
                                                 Rs2Inventory.useItemOnNpc(ItemID.SLAYER_ICY_WATER, inCombatNpc);
+                                                Rs2Player.waitForXpDrop(Skill.SLAYER, 5000);
                                             }
                                         }
                                         break;
@@ -409,7 +426,7 @@ public class CardewSlayerScript extends Script {
                             for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
                             {
                                 Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
-                                if (Rs2Bank.hasItem(requiredItem) && !Rs2Inventory.hasItem(requiredItem))
+                                if (Rs2Bank.hasItem(requiredItem))
                                 {
                                     // If our required item is a Slayer helm component
                                     // Only withdraw these if we don't have a slayer helm
@@ -424,16 +441,29 @@ public class CardewSlayerScript extends Script {
                                         IsNotWearingItemThenWithdraw(requiredItem);
                                         continue;
                                     }
+                                    else if (requiredItem.toLowerCase().contains("ice cooler"))
+                                    {
+                                        Rs2Bank.withdrawX(requiredItem, killsLeft, false);
+                                        Rs2Inventory.waitForInventoryChanges(5000);
+                                        Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
+                                        Rs2Inventory.waitForInventoryChanges(5000);
+                                        Rs2Bank.withdrawX(ItemID.WATER_SKIN4, 2);
+                                        Rs2Inventory.waitForInventoryChanges(5000);
 
+                                        hasRequiredItem = true;
+                                        continue;
+                                    }
                                     // Withdrawn regular non-case required item
                                     // If we are already wearing the required item no need to withdraw
                                     IsNotWearingItemThenWithdraw(requiredItem);
                                 }
+                                // LOOK FOR A BULLSEYE HERE, BECAUSE requiredItem STRING WILL NEVER MATCH THE ACTUAL NAME ANYMORE
                                 else if (requiredItem.toLowerCase().contains("bullseye lantern"))
                                 {
                                     if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
                                     {
                                         Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
+                                        hasRequiredItem = true;
                                     }
                                     else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
                                     {
@@ -453,6 +483,8 @@ public class CardewSlayerScript extends Script {
 
                                             Rs2Bank.depositItems(ItemID.TINDERBOX);
                                             lightingLightSource = false;
+
+                                            hasRequiredItem = true;
                                         }
                                     }
                                 }
@@ -477,25 +509,32 @@ public class CardewSlayerScript extends Script {
                                 }
                             }
                         }
+                        if (slayerTarget == CUtil.SlayerTarget.KALPHITE && !hasRequiredItem)
+                        {
+                            Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
+                            Rs2Inventory.waitForInventoryChanges(5000);
+
+                            hasRequiredItem = true;
+                        }
                     }
 
                     if (!lootBanked)
                     {
-                        if (_config.InventorySetup() != null && !equippedRequiredItem)
+                        if (_config.InventorySetup() != null && !hasRequiredItem)
                         {
                             Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
                             setup.loadEquipment();
                             setup.loadInventory();
                         }
-                        else if (_config.InventorySetup() != null)
-                        {
-                            Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
-                            setup.loadInventory();
-                        }
+                        //else if (_config.InventorySetup() != null)
+                        //{
+                        //    Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                        //    setup.loadInventory();
+                        //}
                         else
                         {
                             // No inventory setup loaded
-                            Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem", "Dramen staff", "Herb sack", "Open herb sack");
+                            Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem", "Dramen staff", "Herb sack", "Open herb sack", "Shantay pass", "Ice cooler", "Waterskin(4)", "Bullseye lantern");
                         }
                         Rs2Inventory.interact(Seedbox.OPEN.getId(), "Empty");
                         lootBanked = true;
@@ -563,13 +602,15 @@ public class CardewSlayerScript extends Script {
     {
         if (!Rs2Equipment.isWearing(_requiredItem, false))
         {
-            //Rs2Bank.withdrawOne(_requiredItem);
-            if (Rs2Bank.withdrawAndEquip(_requiredItem))
+            if (Rs2Bank.hasItem(_requiredItem))
             {
-                // We did equip the item
-                // Flag lootBanked as false so we will bank any items we end up swapping out for required item
-                lootBanked = false;
-                equippedRequiredItem = true;
+                if (Rs2Bank.withdrawAndEquip(_requiredItem))
+                {
+                    // We did equip the item
+                    // Flag lootBanked as false so we will bank any items we end up swapping out for required item
+                    lootBanked = false;
+                }
+                hasRequiredItem = true;
             }
         }
     }
@@ -670,7 +711,7 @@ public class CardewSlayerScript extends Script {
     {
         currentState = States.MOVING_TO_SLAYER_MASTER;
         killsLeft = 0;
-        equippedRequiredItem = false;
+        hasRequiredItem = false;
         slayerTarget = CUtil.SlayerTarget.NONE;
         targetMonsterName = "";
         lootBanked = false;
