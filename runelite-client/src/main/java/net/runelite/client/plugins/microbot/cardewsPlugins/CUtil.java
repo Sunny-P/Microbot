@@ -54,9 +54,11 @@ public class CUtil {
         BAT(SlayerTaskMonster.BAT, new WorldPoint(3370, 3485, 0)),
         BEAR(SlayerTaskMonster.BEAR, new WorldPoint(2705, 3340, 0)),
         BIRD(SlayerTaskMonster.BIRD, new WorldPoint(0, 0, 0)),  // BIRD uses alternative locations. Location is populated in script based on config.AlternativeBirdTask
+        CATABLEPON(SlayerTaskMonster.CATABLEPON, new WorldPoint(2162, 5286, 0)),
         CAVE_BUG(SlayerTaskMonster.CAVE_BUG, new WorldPoint(3152, 9574, 0)),
         CAVE_CRAWLER(SlayerTaskMonster.CAVE_CRAWLER, new WorldPoint(2791, 9996, 0)),
         CAVE_SLIME(SlayerTaskMonster.CAVE_SLIME, new WorldPoint(3156, 9547, 0)),
+        COCKATRICE(SlayerTaskMonster.COCKATRICE, new WorldPoint(2791, 10036, 0)),
         COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
         CRAWLING_HAND(SlayerTaskMonster.CRAWLING_HAND, new WorldPoint(3411, 3538, 0)),
         DOG(SlayerTaskMonster.DOG, new WorldPoint(2669, 3495, 0)),   // Goes to McGrubors wood Guard Dogs. Can extend Alternative tasks if wanted, similar to BIRD.

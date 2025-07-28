@@ -129,6 +129,11 @@ public class CardewSlayerScript extends Script {
                 }
                 HandleStateMachine(config);
 
+                if (config.PickupAndBuryBones())
+                {
+                    BuryBones();
+                }
+
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
                 //System.out.println("Total time for loop " + totalTime);
@@ -138,17 +143,6 @@ public class CardewSlayerScript extends Script {
             }
         }, 0, 600, TimeUnit.MILLISECONDS);
         return true;
-    }
-
-    // Old method when a String was used for Slayer Master name
-    SlayerMaster GetSlayerMasterFromConfigString(CardewSlayerConfig _config) {
-        for (SlayerMaster master : SlayerMaster.values()) {
-            if (master.getName().equalsIgnoreCase(_config.SlayerMaster().getName())) {
-                return master;
-            }
-        }
-        // No string equal to a masters name
-        return SlayerMaster.NONE;
     }
 
     void HandleStateMachine(CardewSlayerConfig _config)
@@ -294,11 +288,6 @@ public class CardewSlayerScript extends Script {
                     }
                 }
 
-                if (killsLeft <= 0)
-                {
-                    currentState = States.MOVING_TO_NEAREST_BANK;
-                }
-
                 npcsInteractingWithPlayer = Rs2Npc.getNpcsForPlayer().collect(Collectors.toList());
 
                 if (!Rs2Combat.inCombat())
@@ -332,6 +321,7 @@ public class CardewSlayerScript extends Script {
                             targetList = Rs2Npc.getAttackableNpcs()
                                     .filter(npc -> npc != null
                                             && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                             && npc.getName() != null && npc.getName().toLowerCase().contains(_config.AlternativeKalphiteTask().getMonsterName().toLowerCase()))
                                     .collect(Collectors.toList());
                         }
@@ -340,6 +330,7 @@ public class CardewSlayerScript extends Script {
                             targetList = Rs2Npc.getAttackableNpcs()
                                     .filter(npc -> npc != null
                                             && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                             && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
                                     .collect(Collectors.toList());
                         }
@@ -373,7 +364,10 @@ public class CardewSlayerScript extends Script {
                         {
                             case LIZARD:
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
-                                        .filter(npc -> npc != null && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
+                                        .filter(npc -> npc != null
+                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                                && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                                                && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
                                         .findFirst().orElse(null);
                                 assert inCombatNpc != null;
                                 switch (inCombatNpc.getId())
@@ -646,6 +640,13 @@ public class CardewSlayerScript extends Script {
             currentState = States.MOVING_TO_NEAREST_BANK;
             return;
         }
+        else if (targetMonsterName.toLowerCase().contains("dwarves"))
+        {
+            slayerTarget = CUtil.SlayerTarget.DWARF;
+            slayerTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
+            currentState = States.MOVING_TO_NEAREST_BANK;
+            return;
+        }
 
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
             if (potentialTarget.getMonsterData() != null) {
@@ -720,6 +721,21 @@ public class CardewSlayerScript extends Script {
     public void DeductKillsLeft()
     {
         killsLeft--;
+    }
+
+    void BuryBones()
+    {
+        if (Rs2Inventory.hasItem("bones", false))
+        {
+            Rs2ItemModel boneItem = Rs2Inventory.get("bones", false);
+            for (String action : boneItem.getInventoryActions())
+            {
+                if (action.equalsIgnoreCase("bury"))
+                {
+                    Rs2Inventory.interact(boneItem, "bury");
+                }
+            }
+        }
     }
 
     void HandleLooting(CardewSlayerConfig _config)
@@ -801,18 +817,6 @@ public class CardewSlayerScript extends Script {
                     "bones"
             );
             Rs2GroundItem.lootItemsBasedOnNames(boneItemParams);
-
-            if (Rs2Inventory.hasItem("bones", false))
-            {
-                Rs2ItemModel boneItem = Rs2Inventory.get("bones", false);
-                for (String action : boneItem.getInventoryActions())
-                {
-                    if (action.equalsIgnoreCase("bury"))
-                    {
-                        Rs2Inventory.interact(boneItem, "bury");
-                    }
-                }
-            }
         }
     }
 }

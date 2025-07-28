@@ -6,7 +6,7 @@ import net.runelite.client.plugins.microbot.inventorysetups.InventorySetup;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 
 @ConfigGroup("CardewSlayer")
-@ConfigInformation("May need Shantay Pass' in Inventory for Kalphite/Desert tasks")
+@ConfigInformation("Please have any required items in your bank. <br>Superiors not yet supported.")
 public interface CardewSlayerConfig extends Config{
     @ConfigItem(
             name = "Slayer Master",
