@@ -64,10 +64,37 @@ public interface CardewSlayerConfig extends Config{
             name = "Crab Alternative Task",
             keyName = "crabAlternativeTask",
             position = 4,
-            description = "The location you will go to for crabs",
+            description = "The location you will slay Crabs",
             section = taskAlternativeSection
     )
     default CUtil.AlternativeCrabTask AlternativeCrabTask() { return CUtil.AlternativeCrabTask.SAND_CRAB_HOSIDIUS_SOUTH; }
+
+    @ConfigItem(
+            name = "Hill Giant Alternative Task",
+            keyName = "hillgiantAlternativeTask",
+            position = 5,
+            description = "The location you will slay Hill Giants",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeHillGiantTask AlternativeHillGiantTask() { return CUtil.AlternativeHillGiantTask.HILL_GIANT_EDGEVILLE_DUNGEON; }
+
+    @ConfigItem(
+            name = "Shades Alternative Task",
+            keyName = "shadesAlternativeTask",
+            position = 6,
+            description = "The variant of shade you will slay",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeShadeTask AlternativeShadeTask() { return CUtil.AlternativeShadeTask.LOAR_SHADE; }
+
+    @ConfigItem(
+            name = "Vampyre Alternative Task",
+            keyName = "vampyreAlternativeTask",
+            position = 7,
+            description = "The vampyre you will go to slay",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeVampyreTask AlternativeVampyreTask() { return CUtil.AlternativeVampyreTask.FERAL_VAMPYRE; }
 
     @ConfigItem(
             name = "Inventory Setup to Use",

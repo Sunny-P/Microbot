@@ -75,7 +75,7 @@ public class CardewSlayerPlugin extends Plugin {
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
-        if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
+        if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM && event.getType() != ChatMessageType.ENGINE)
         {
             return;
         }
@@ -90,6 +90,15 @@ public class CardewSlayerPlugin extends Plugin {
         else if (chatMsg.contains("You have completed your task!"))
         {
             cardewSlayerScript.SlayerTaskCompleted();
+        }
+        else if (chatMsg.contains("helmet repels the wall beast") && (cardewSlayerScript.GetCurrentState() == CardewSlayerScript.States.SLAYING_MONSTER))
+        {
+            cardewSlayerScript.WallBeastAppeared();
+        }
+        else if (chatMsg.contains("can't reach"))
+        {
+            //Microbot.log("Trying to do something you can't reach detected!<br>ChatMessageType: " + event.getType());
+            cardewSlayerScript.tryForceWalkToMonsterLocation = true;
         }
     }
 

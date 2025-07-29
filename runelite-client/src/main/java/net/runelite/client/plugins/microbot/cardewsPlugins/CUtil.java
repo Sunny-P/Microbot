@@ -2,13 +2,13 @@ package net.runelite.client.plugins.microbot.cardewsPlugins;
 
 import lombok.Getter;
 import net.runelite.api.Point;
-import net.runelite.api.World;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerTaskMonster;
 
 import java.awt.*;
+import java.util.Map;
 
 public class CUtil {
     public static Point GetRandomPointInRectangle(Rectangle rect)
@@ -16,6 +16,46 @@ public class CUtil {
         int randX = (int)(Math.random() * rect.width);
         int randY = (int)(Math.random() * rect.height);
         return new Point(randX, randY);
+    }
+
+    public static String SingularisePluralName(String plural) {
+        String word = plural.toLowerCase();
+
+        // Handle known irregulars first
+        Map<String, String> irregulars = Map.of(
+                "wolves", "wolf",
+                "dwarves", "dwarf",
+                "vampyres", "vampyre",
+                "men", "man",
+                "women", "woman",
+                "children", "child"
+        );
+
+        if (irregulars.containsKey(word)) {
+            return irregulars.get(word);
+        }
+
+        // Handle regular plural patterns
+        if (word.endsWith("ies"))
+        {
+            return word.substring(0, word.length() - 3) + "y"; // e.g., "bodies" → "body"
+        }
+        else if (word.endsWith("ves"))
+        {
+            return word.substring(0, word.length() - 3) + "f"; // e.g., "wolves" already handled, "shelves" → "shelf"
+        }
+        else if (word.endsWith("es"))
+        {
+            // Handle "boxes", "witches", "bosses"
+            return word.substring(0, word.length() - 2);
+        }
+        else if (word.endsWith("s") && word.length() > 1)
+        {
+            return word.substring(0, word.length() - 1);
+        }
+
+        // If none matched, return as is
+        return word;
     }
 
     public static void SetMyAntiban(double _microbreakChance, int _mbreakDurationLow, int _mbreakDurationHigh, double _actionCooldownChance)
@@ -60,23 +100,34 @@ public class CUtil {
         CAVE_SLIME(SlayerTaskMonster.CAVE_SLIME, new WorldPoint(3156, 9547, 0)),
         COCKATRICE(SlayerTaskMonster.COCKATRICE, new WorldPoint(2791, 10036, 0)),
         COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
-        CRAB(SlayerTaskMonster.CRAB, new WorldPoint(0, 0, 0)),
+        CRAB(SlayerTaskMonster.CRAB, new WorldPoint(0, 0, 0)),  // Alt crab locations
         CRAWLING_HAND(SlayerTaskMonster.CRAWLING_HAND, new WorldPoint(3411, 3538, 0)),
         DOG(SlayerTaskMonster.DOG, new WorldPoint(2669, 3495, 0)),   // Goes to McGrubors wood Guard Dogs. Can extend Alternative tasks if wanted, similar to BIRD.
         DWARF(SlayerTaskMonster.DWARF, new WorldPoint(0, 0, 0)),    // Alt dwarf locations
-        FLESH_CRAWLER(SlayerTaskMonster.FLESH_CRAWLER, new WorldPoint(0, 0, 0)),
+        FLESH_CRAWLER(SlayerTaskMonster.FLESH_CRAWLER, new WorldPoint(2040, 5187, 0)),
         GHOST(SlayerTaskMonster.GHOST, new WorldPoint(1690, 10062, 0)),
+        GHOUL(SlayerTaskMonster.GHOUL, new WorldPoint(3417, 3512, 0)),
         GOBLIN(SlayerTaskMonster.GOBLIN, new WorldPoint(3259, 3228, 0)),
+        HILL_GIANT(SlayerTaskMonster.HILL_GIANT, new WorldPoint(0, 0, 0)),  // Alt hill giant locations
+        HOBGOBLIN(SlayerTaskMonster.HOBGOBLIN, new WorldPoint(2910, 3282, 0)),
         ICEFIEND(SlayerTaskMonster.ICEFIEND, new WorldPoint(3007, 3474, 0)),
+        ICE_WARRIOR(SlayerTaskMonster.ICE_WARRIOR, new WorldPoint(3044, 9582, 0)),
         KALPHITE(SlayerTaskMonster.KALPHITE, new WorldPoint(0, 0, 0)),  // Alt kalphite locations
+        KILLERWATT(SlayerTaskMonster.KILLERWATT, new WorldPoint(2674, 5214, 2)),
         LIZARD(SlayerTaskMonster.LIZARD, new WorldPoint(3441, 3065, 0)),
         MINOTAUR(SlayerTaskMonster.MINOTAUR, new WorldPoint(1881, 5217, 0)),
+        MOGRE(SlayerTaskMonster.MOGRE, new WorldPoint(2990, 3114, 0)),
         MONKEY(SlayerTaskMonster.MONKEY, new WorldPoint(2877, 3154, 0)),
+        PYREFIEND(SlayerTaskMonster.PYREFIEND, new WorldPoint(2762, 10002, 0)),
         RAT(SlayerTaskMonster.RAT, new WorldPoint(3199, 3209, 0)),
+        ROCKSLUG(SlayerTaskMonster.ROCKSLUG, new WorldPoint(2797, 10017, 0)),
         SCORPION(SlayerTaskMonster.SCORPION, new WorldPoint(3043, 9789, 0)),
+        SHADES(SlayerTaskMonster.SHADE, new WorldPoint(0, 0, 0)),   // Alt shade location
         SKELETON(SlayerTaskMonster.SKELETON, new WorldPoint(1641, 10047, 0)),
         SPIDER(SlayerTaskMonster.SPIDER, new WorldPoint(3167, 3245, 0)),
+        WALL_BEAST(SlayerTaskMonster.WALL_BEAST, new WorldPoint(3207, 9555, 0)),
         WOLF(SlayerTaskMonster.WOLF, new WorldPoint(0, 0, 0)),  // Alt wolf locations
+        VAMPYRE(SlayerTaskMonster.VAMPYRE, new WorldPoint(0, 0, 0)),
         ZOMBIE(SlayerTaskMonster.ZOMBIE, new WorldPoint(3146, 9900, 0));
 
         private final SlayerTaskMonster monsterData;
@@ -167,6 +218,50 @@ public class CUtil {
         private final WorldPoint location;
 
         AlternativeCrabTask(String _monsterName, WorldPoint _location)
+        {
+            this.monsterName = _monsterName;
+            this.location = _location;
+        }
+    }
+
+    @Getter
+    public enum AlternativeHillGiantTask {
+        HILL_GIANT_EDGEVILLE_DUNGEON("Hill Giant", new WorldPoint(3117, 9845, 0)),
+        HILL_GIANT_CATACOMBS_OF_KOUREND("Hill Giant", new WorldPoint(1664, 10072, 0));
+
+        private final String monsterName;
+        private final WorldPoint location;
+
+        AlternativeHillGiantTask(String _monsterName, WorldPoint _location)
+        {
+            this.monsterName = _monsterName;
+            this.location = _location;
+        }
+    }
+
+    @Getter
+    public enum AlternativeShadeTask {
+        // Uses the shadow variant of the name because if we are out of combat and need to search for a target, they are shadows
+        LOAR_SHADE("Loar Shadow", new WorldPoint(3494, 3279, 0));
+
+        private final String monsterName;
+        private final WorldPoint location;
+
+        AlternativeShadeTask(String _monsterName, WorldPoint _location)
+        {
+            this.monsterName = _monsterName;
+            this.location = _location;
+        }
+    }
+
+    @Getter
+    public enum AlternativeVampyreTask {
+        FERAL_VAMPYRE("Feral Vampyre", new WorldPoint(3592, 3481, 0));
+
+        private final String monsterName;
+        private final WorldPoint location;
+
+        AlternativeVampyreTask(String _monsterName, WorldPoint _location)
         {
             this.monsterName = _monsterName;
             this.location = _location;

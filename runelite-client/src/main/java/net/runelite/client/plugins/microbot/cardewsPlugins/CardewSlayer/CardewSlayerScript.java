@@ -1,6 +1,8 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
 import lombok.Getter;
+import lombok.Setter;
+import net.runelite.api.GameObject;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
@@ -14,8 +16,10 @@ import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
+import net.runelite.client.plugins.microbot.util.coords.Rs2WorldPoint;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
+import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -24,9 +28,9 @@ import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.slayer.Rs2Slayer;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
-import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 import org.slf4j.event.Level;
 
 import java.util.*;
@@ -37,7 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class CardewSlayerScript extends Script {
-    enum States{
+    public enum States{
         MOVING_TO_SLAYER_MASTER,
         GETTING_SLAYER_TASK,
         MOVING_TO_MONSTER_LOCATION,
@@ -46,7 +50,7 @@ public class CardewSlayerScript extends Script {
         BANKING
     }
     @Getter
-    static States currentState = States.MOVING_TO_SLAYER_MASTER;
+    static States currentState = States.MOVING_TO_NEAREST_BANK;
 
     @Getter
     enum Seedbox{
@@ -72,6 +76,10 @@ public class CardewSlayerScript extends Script {
     boolean lootBanked = false;
     boolean lightingLightSource = false;
     boolean hasRequiredItem = false;
+    boolean wallBeastAppeared = false;
+    @Setter
+    boolean tryForceWalkToMonsterLocation = false;
+    int turaelSkipProgress = -1;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -81,6 +89,7 @@ public class CardewSlayerScript extends Script {
         lootBanked = false;
         lightingLightSource = false;
         hasRequiredItem = false;
+        wallBeastAppeared = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -118,21 +127,35 @@ public class CardewSlayerScript extends Script {
                         // Handle emergency teleport/transitioning to banking state
                         if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION)
                         {
-                            currentState = States.MOVING_TO_NEAREST_BANK;
+                            Microbot.log("Health percent: " + (double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS));
+                            // If our health drops below a danger threshold?
+                            if ((double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS) < 0.5)
+                            {
+                                // If we are below half health
+                                currentState = States.MOVING_TO_NEAREST_BANK;
+                            }
                         }
                     }
                 }
+
                 if (!Rs2Inventory.isFull())
                 {
                     // Loot
                     HandleLooting(config);
                 }
-                HandleStateMachine(config);
-
                 if (config.PickupAndBuryBones())
                 {
                     BuryBones();
                 }
+
+                if (tryForceWalkToMonsterLocation)
+                {
+                    //Microbot.log("FORCE WALKING CLOSELY TO MONSTER LOCATION?");
+                    WalkToMonsterLocationDirect();
+                    return;
+                }
+
+                HandleStateMachine(config);
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
@@ -141,7 +164,7 @@ public class CardewSlayerScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 600, TimeUnit.MILLISECONDS);
+        }, 0, 300, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -199,53 +222,63 @@ public class CardewSlayerScript extends Script {
                 }
                 // Assuming we have no task
                 // Check if we have chat text widget active
-                if (Rs2Widget.isWidgetVisible(231, 6)) {
-                    // Get the text as a string
-                    String chatText = Rs2Widget.getChildWidgetText(231, 6);
-                    // Get number of kills
-                    // Get name of task
-                    Pattern pattern = Pattern.compile("kill (\\d+) (.+)", Pattern.CASE_INSENSITIVE);
-                    Matcher matcher = pattern.matcher(chatText);
+                //if (Rs2Widget.isWidgetVisible(231, 6)) {
+                //    // Get the text as a string
+                //    String chatText = Rs2Widget.getChildWidgetText(231, 6);
+                //    // Get number of kills
+                //    // Get name of task
+                //    Pattern pattern = Pattern.compile("kill (\\d+) (.+)", Pattern.CASE_INSENSITIVE);
+                //    Matcher matcher = pattern.matcher(chatText);
+//
+                //    if (matcher.find()) {
+                //        // Gained killsLeft and monster data with this pattern method. I.E new task
+                //        killsLeft = Integer.parseInt(matcher.group(1));
+                //        targetMonsterName = matcher.group(2).trim();
+//
+                //        Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
+//
+                //        if (Rs2Dialogue.hasContinue())
+                //        {
+                //            Rs2Dialogue.clickContinue();
+                //        }
+//
+                //        DetermineStateFromSlayerTask(_config);
+                //    }
+                //    else {
+                //        // Get killsLeft and monster info with second pattern. I.E already on task.
+                //        Pattern secondPattern = Pattern.compile("hunting (.+?), you have (\\d+) to go", Pattern.CASE_INSENSITIVE);
+                //        Matcher secondMatcher = secondPattern.matcher(chatText);
+//
+                //        if (secondMatcher.find()) {
+                //            targetMonsterName = secondMatcher.group(1).trim();
+                //            killsLeft = Integer.parseInt(secondMatcher.group(2));
+//
+                //            Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
+//
+                //            if (Rs2Dialogue.hasContinue())
+                //            {
+                //                Rs2Dialogue.clickContinue();
+                //            }
+//
+                //            DetermineStateFromSlayerTask(_config);
+                //        }
+                //        else {
+                //            Microbot.log("CardewSlayer: Couldn't parse slayer target information", Level.ERROR);
+                //            this.shutdown();
+                //        }
+                //    }
+                //}
+                if (Rs2Slayer.hasSlayerTask())
+                {
+                    targetMonsterName = Rs2Slayer.getSlayerTask();
+                    targetMonsterName = CUtil.SingularisePluralName(targetMonsterName);
+                    killsLeft = Rs2Slayer.getSlayerTaskSize();
+                    Microbot.log("Slayer target: " + targetMonsterName);
 
-                    if (matcher.find()) {
-                        // Gained killsLeft and monster data with this pattern method. I.E new task
-                        killsLeft = Integer.parseInt(matcher.group(1));
-                        targetMonsterName = matcher.group(2).trim();
-
-                        Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
-
-                        if (Rs2Dialogue.hasContinue())
-                        {
-                            Rs2Dialogue.clickContinue();
-                        }
-
-                        DetermineStateFromSlayerTask(_config);
-                    }
-                    else {
-                        // Get killsLeft and monster info with second pattern. I.E already on task.
-                        Pattern secondPattern = Pattern.compile("hunting (.+?), you have (\\d+) to go", Pattern.CASE_INSENSITIVE);
-                        Matcher secondMatcher = secondPattern.matcher(chatText);
-
-                        if (secondMatcher.find()) {
-                            targetMonsterName = secondMatcher.group(1).trim();
-                            killsLeft = Integer.parseInt(secondMatcher.group(2));
-
-                            Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
-
-                            if (Rs2Dialogue.hasContinue())
-                            {
-                                Rs2Dialogue.clickContinue();
-                            }
-
-                            DetermineStateFromSlayerTask(_config);
-                        }
-                        else {
-                            Microbot.log("CardewSlayer: Couldn't parse slayer target information", Level.ERROR);
-                            this.shutdown();
-                        }
-                    }
+                    DetermineStateFromSlayerTask(_config);
                 }
-                else {
+                else
+                {
                     if (currentMaster == SlayerMaster.NONE) {
                         Microbot.log("CardewSlayer: No Slayer Master!");
                         break;
@@ -278,13 +311,15 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case SLAYING_MONSTER:
+                targetList.clear();
+                npcsInteractingWithPlayer.clear();
                 if (Rs2Inventory.isFull())
                 {
                     // Check inventory for food
                     if (!Rs2Inventory.getInventoryFood().isEmpty())
                     {
                         // Eat some food to clear space for loot
-                        Rs2Player.eatAt(1);
+                        Rs2Player.eatAt(100);
                     }
                 }
 
@@ -297,13 +332,15 @@ public class CardewSlayerScript extends Script {
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
-                                .filter(npc -> npc.getComposition() != null &&
-                                        Arrays.stream(npc.getComposition().getActions())
-                                                .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
+                                .filter(npc -> npc.getComposition() != null
+                                        && Arrays.stream(npc.getComposition().getActions())
+                                        .anyMatch(action -> action != null && action.toLowerCase().contains("attack"))
+                                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
                                 .findFirst().orElse(null);
+                        assert target != null;
+
                         Microbot.log("Target: " + target);
 
-                        assert target != null;
                         if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
                         {
                             Rs2Camera.turnTo(target);
@@ -316,25 +353,66 @@ public class CardewSlayerScript extends Script {
                     {
                         // We don't have any monsters currently in combat with us
                         // Pick a fresh target
-                        if (slayerTarget == CUtil.SlayerTarget.KALPHITE)
+                        switch (slayerTarget)
                         {
-                            targetList = Rs2Npc.getAttackableNpcs()
-                                    .filter(npc -> npc != null
-                                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
-                                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
-                                            && npc.getName() != null && npc.getName().toLowerCase().contains(_config.AlternativeKalphiteTask().getMonsterName().toLowerCase()))
-                                    .collect(Collectors.toList());
+                            case KALPHITE:
+                                PopulateTargetList(_config.AlternativeKalphiteTask().getMonsterName().toLowerCase());
+                                break;
+                            case MOGRE:
+                                // IF WE ARE KILLING MOGRES & WE DON'T ALREADY HAVE A MOGRE ATTACKING US
+                                // LURE A NEW MOGRE
+                                GameObject ominousFishingSpot = Rs2GameObject.getGameObject("Ominous Fishing Spot");
+                                if (ominousFishingSpot != null)
+                                {
+                                    Rs2Inventory.useItemOnObject(ItemID.FISHING_EXPLOSIVE, ominousFishingSpot.getId());
+                                    // Probably ideally wait for our throwing animation
+                                    // Until we can fight it, wait for inv change?
+                                    Rs2Inventory.waitForInventoryChanges(5000);
+                                }
+                                break;
+                            case SHADES:
+                                PopulateTargetList(_config.AlternativeShadeTask().getMonsterName().toLowerCase());
+                                break;
+                            case WALL_BEAST:
+                                WorldPoint wallBeastLocation1, wallBeastLocation2;
+                                wallBeastLocation1 = new WorldPoint(3198, 9553, 0);
+                                wallBeastLocation2 = new WorldPoint(3215, 9559, 0);
+
+                                // If we don't currently have a wall beast
+                                if (!wallBeastAppeared)
+                                {
+                                    // If we are closer to wallBeastLocation1
+                                    if (Rs2Walker.getDistanceBetween(Rs2Player.getWorldLocation(), wallBeastLocation1) < Rs2Walker.getDistanceBetween(Rs2Player.getWorldLocation(), wallBeastLocation2))
+                                    {
+                                        // Run to spot 2 and try trigger wall beast
+                                        Rs2Walker.walkTo(wallBeastLocation2, 1);
+                                        Rs2Player.waitForAnimation(2500);
+                                    }
+                                    else
+                                    {
+                                        // Try and trigger the spot 1 wall beast
+                                        Rs2Walker.walkTo(wallBeastLocation1, 1);
+                                        // Wait for animation to complete or 2 seconds
+                                        // We have either waited for 2 seconds or for the length of the wall beast grabbing us animation
+                                        Rs2Player.waitForAnimation(2500);
+                                    }
+                                }
+                                else
+                                {
+                                    //targetList = Rs2Npc.getAttackableNpcs()
+                                    //        .filter(npc -> npc != null
+                                    //                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                    //                && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                                    //                && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
+                                    //        .collect(Collectors.toList());
+                                    PopulateTargetList(slayerTarget.getMonsterData().getMonster().toLowerCase());
+                                }
+                                break;
+                            default:
+                                PopulateTargetList(slayerTarget.getMonsterData().getMonster().toLowerCase());
+                                break;
                         }
-                        else
-                        {
-                            targetList = Rs2Npc.getAttackableNpcs()
-                                    .filter(npc -> npc != null
-                                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
-                                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
-                                            && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
-                                    .collect(Collectors.toList());
-                        }
-                        Microbot.log("TargetList: " + targetList);
+                        //Microbot.log("TargetList: " + targetList);
 
                         if (!targetList.isEmpty())
                         {
@@ -342,10 +420,13 @@ public class CardewSlayerScript extends Script {
                                     .findFirst()
                                     .orElse(null);
 
-                            // If monster is not in camera, turn to it
-                            if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
+                            if (target.getLocalLocation() != null)
                             {
-                                Rs2Camera.turnTo(target);
+                                // If monster is not in camera, turn to it
+                                if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
+                                {
+                                    Rs2Camera.turnTo(target);
+                                }
                             }
 
                             Rs2Npc.interact(target, "Attack");
@@ -363,6 +444,7 @@ public class CardewSlayerScript extends Script {
                         switch (slayerTarget)
                         {
                             case LIZARD:
+                                // IF WE DONT HAVE AUTO LIZARD ICE COOLER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
                                                 && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
@@ -386,7 +468,35 @@ public class CardewSlayerScript extends Script {
                                                 Rs2Player.waitForXpDrop(Skill.SLAYER, 5000);
                                             }
                                         }
+                                        else
+                                        {
+                                            currentState = States.MOVING_TO_NEAREST_BANK;
+                                            return;
+                                        }
                                         break;
+                                }
+                                break;
+                            case ROCKSLUG:
+                                // IF WE DONT HAVE AUTO SALTER SLAYER PERK
+                                inCombatNpc = npcsInteractingWithPlayer.stream()
+                                        .filter(npc -> npc != null
+                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                                && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                                                && npc.getName() != null && npc.getName().toLowerCase().contains("rockslug"))
+                                        .findFirst().orElse(null);
+                                assert inCombatNpc != null;
+                                if (Rs2Inventory.contains(ItemID.SLAYER_BAG_OF_SALT))
+                                {
+                                    if (inCombatNpc.getHealthRatio() < 4)
+                                    {
+                                        Rs2Inventory.useItemOnNpc(ItemID.SLAYER_BAG_OF_SALT, inCombatNpc);
+                                        Rs2Player.waitForXpDrop(Skill.SLAYER, 5000);
+                                    }
+                                }
+                                else
+                                {
+                                    currentState = States.MOVING_TO_NEAREST_BANK;
+                                    return;
                                 }
                                 break;
                         }
@@ -408,12 +518,46 @@ public class CardewSlayerScript extends Script {
                 }
                 else
                 {
+                    if (!lootBanked)
+                    {
+                        if (_config.InventorySetup() != null && !hasRequiredItem)
+                        {
+                            Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                            setup.loadEquipment();
+                            setup.loadInventory();
+                            lootBanked = true;
+                        }
+                        //else if (_config.InventorySetup() != null)
+                        //{
+                        //    Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                        //    setup.loadInventory();
+                        //}
+                        else if (!hasRequiredItem)
+                        {
+                            // No inventory setup loaded
+                            Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem", "Herb sack", "Open herb sack");
+                            lootBanked = true;
+                        }
+                        Rs2Inventory.interact(Seedbox.OPEN.getId(), "Empty");
+
+                        Microbot.log("Banked loot.");
+
+                        if (killsLeft <= 0)
+                        {
+                            currentState = States.MOVING_TO_SLAYER_MASTER;
+                            lootBanked = false;
+                            hasRequiredItem = false;
+                            return;
+                            //break;
+                        }
+                    }
+
                     // We are regearing/banking loot for a current task
                     if (killsLeft > 0)
                     {
                         // Check if our task has any requirements in the first place
                         List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
-                        if (!requiredItemsList.get(0).equalsIgnoreCase("none"))
+                        if (!requiredItemsList.get(0).equalsIgnoreCase("none") && !hasRequiredItem)
                         {
                             boolean requireSlayerHelm = true;
 
@@ -442,6 +586,14 @@ public class CardewSlayerScript extends Script {
                                         Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
                                         Rs2Inventory.waitForInventoryChanges(5000);
                                         Rs2Bank.withdrawX(ItemID.WATER_SKIN4, 2);
+                                        Rs2Inventory.waitForInventoryChanges(5000);
+
+                                        hasRequiredItem = true;
+                                        continue;
+                                    }
+                                    else if (requiredItem.toLowerCase().contains("bag of salt"))
+                                    {
+                                        Rs2Bank.withdrawX(requiredItem, killsLeft, false);
                                         Rs2Inventory.waitForInventoryChanges(5000);
 
                                         hasRequiredItem = true;
@@ -503,53 +655,63 @@ public class CardewSlayerScript extends Script {
                                 }
                             }
                         }
+                        // Regardless of a required item
                         if (slayerTarget == CUtil.SlayerTarget.KALPHITE && !hasRequiredItem)
                         {
-                            Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
-                            Rs2Inventory.waitForInventoryChanges(5000);
+                            // Kalphite cave needs a shantay pass if I don't have fairy rings
+                            if (Rs2Bank.hasItem(ItemID.SHANTAY_PASS))
+                            {
+                                Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
+                                Rs2Inventory.waitForInventoryChanges(5000);
 
-                            hasRequiredItem = true;
+                                hasRequiredItem = true;
+                            }
+                        }
+                        else if (slayerTarget == CUtil.SlayerTarget.HILL_GIANT && !hasRequiredItem)
+                        {
+                            // If going to edgeville dungeon, get a brass key
+                            if (_config.AlternativeHillGiantTask() == CUtil.AlternativeHillGiantTask.HILL_GIANT_EDGEVILLE_DUNGEON)
+                            {
+                                if (Rs2Bank.hasItem(ItemID.EDGEVILLEDUNGEONKEY))
+                                {
+                                    Rs2Bank.withdrawOne(ItemID.EDGEVILLEDUNGEONKEY);
+                                    Rs2Inventory.waitForInventoryChanges(5000);
+
+                                    hasRequiredItem = true;
+                                }
+                            }
+                        }
+
+                        boolean foodWithdrawn = false;
+                        // Withdraw food
+                        for (Rs2Food food : Arrays.stream(Rs2Food.values()).sorted(Comparator.comparingInt(Rs2Food::getHeal).reversed()).collect(Collectors.toList()))
+                        {
+                            if (Rs2Bank.hasBankItem(food.getId(), _config.NumberOfFood()))
+                            {
+                                Rs2Bank.withdrawX(food.getId(), _config.NumberOfFood());
+                                foodWithdrawn = true;
+                                break;
+                            }
+                        }
+                        if (!foodWithdrawn)
+                        {
+                            Microbot.showMessage("No food found! Shutting down.");
+                            this.shutdown();
                         }
                     }
 
-                    if (!lootBanked)
-                    {
-                        if (_config.InventorySetup() != null && !hasRequiredItem)
-                        {
-                            Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
-                            setup.loadEquipment();
-                            setup.loadInventory();
-                        }
-                        //else if (_config.InventorySetup() != null)
-                        //{
-                        //    Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
-                        //    setup.loadInventory();
-                        //}
-                        else
-                        {
-                            // No inventory setup loaded
-                            Rs2Bank.depositAllExcept("Seed box", "Open seed box", "Enchanted gem", "Dramen staff", "Herb sack", "Open herb sack", "Shantay pass", "Ice cooler", "Waterskin(4)", "Bullseye lantern");
-                        }
-                        Rs2Inventory.interact(Seedbox.OPEN.getId(), "Empty");
-                        lootBanked = true;
-
-                        if (killsLeft <= 0)
-                        {
-                            currentState = States.MOVING_TO_SLAYER_MASTER;
-                            lootBanked = false;
-                            break;
-                        }
-                    }
                     // Check inv for and get all wanted items for slayer
                     if (!Rs2Inventory.hasItem(Seedbox.OPEN.getId(), Seedbox.CLOSED.getId()))
                     {
                         if (Rs2Bank.hasItem(Seedbox.OPEN.getId()))
                         {
                             Rs2Bank.withdrawOne(Seedbox.OPEN.getId());
+                            Rs2Inventory.waitForInventoryChanges(5000);
                         }
                         else if (Rs2Bank.hasItem(Seedbox.CLOSED.getId()))
                         {
                             Rs2Bank.withdrawOne(Seedbox.CLOSED.getId());
+                            Rs2Inventory.waitForInventoryChanges(5000);
                         }
                     }
                     if (!Rs2Inventory.hasItem("Enchanted gem"))
@@ -557,24 +719,27 @@ public class CardewSlayerScript extends Script {
                         if (Rs2Bank.hasItem("Enchanted gem"))
                         {
                             Rs2Bank.withdrawOne("Enchanted gem");
-                        }
-                    }
-
-                    // Withdraw food
-                    for (Rs2Food food : Arrays.stream(Rs2Food.values()).sorted(Comparator.comparingInt(Rs2Food::getHeal).reversed()).collect(Collectors.toList()))
-                    {
-                        if (Rs2Bank.hasBankItem(food.getId(), _config.NumberOfFood()))
-                        {
-                            Rs2Bank.withdrawX(food.getId(), _config.NumberOfFood());
-                            break;
+                            Rs2Inventory.waitForInventoryChanges(5000);
                         }
                     }
 
                     currentState = States.MOVING_TO_MONSTER_LOCATION;
                     lootBanked = false;
+                    hasRequiredItem = false;
+                    return;
                 }
                 break;
         }
+    }
+
+    void PopulateTargetList(String _targetName)
+    {
+        targetList = Rs2Npc.getAttackableNpcs()
+                .filter(npc -> npc != null
+                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                        && npc.getName() != null && npc.getName().toLowerCase().contains(_targetName))
+                .collect(Collectors.toList());
     }
 
     void CheckForAndOpenSeedbox()
@@ -615,8 +780,11 @@ public class CardewSlayerScript extends Script {
         Matcher matcher = pattern.matcher(chatMsg);
 
         if (matcher.find()) {
-            targetMonsterName = matcher.group(1).trim();
-            killsLeft = Integer.parseInt(matcher.group(2));
+            //targetMonsterName = matcher.group(1).trim();
+            //killsLeft = Integer.parseInt(matcher.group(2));
+            targetMonsterName = Rs2Slayer.getSlayerTask();
+            targetMonsterName = CUtil.SingularisePluralName(targetMonsterName);
+            killsLeft = Rs2Slayer.getSlayerTaskSize();
 
             Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
 
@@ -633,85 +801,71 @@ public class CardewSlayerScript extends Script {
         Microbot.log("Entered DetermineStateFromSlayerTask()");
 
         // Hard coded task value because I haven't interpretted plural words that are spelt differently, like wolves when the task is looking for wolf
-        if (targetMonsterName.toLowerCase().contains("wolves"))
-        {
-            slayerTarget = CUtil.SlayerTarget.WOLF;
-            slayerTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
-            currentState = States.MOVING_TO_NEAREST_BANK;
-            return;
-        }
-        else if (targetMonsterName.toLowerCase().contains("dwarves"))
-        {
-            slayerTarget = CUtil.SlayerTarget.DWARF;
-            slayerTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
-            currentState = States.MOVING_TO_NEAREST_BANK;
-            return;
-        }
+        //if (targetMonsterName.toLowerCase().contains("wolves"))
+        //{
+        //    slayerTarget = CUtil.SlayerTarget.WOLF;
+        //    slayerTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
+        //    currentState = States.MOVING_TO_NEAREST_BANK;
+        //    return;
+        //}
+        //else if (targetMonsterName.toLowerCase().contains("dwarves"))
+        //{
+        //    slayerTarget = CUtil.SlayerTarget.DWARF;
+        //    slayerTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
+        //    currentState = States.MOVING_TO_NEAREST_BANK;
+        //    return;
+        //}
 
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
             if (potentialTarget.getMonsterData() != null) {
-                Microbot.log("Potential Target: " + potentialTarget.getMonsterData().getMonster());
-                if (targetMonsterName.toLowerCase().contains(potentialTarget.getMonsterData().getMonster().toLowerCase())) {
-                    slayerTarget = potentialTarget;
-                    Microbot.log("Assigned task contains potentialTarget.getMonster(): " + potentialTarget.getMonsterData().getMonster());
-
-                    boolean taskDeterminedFromAlternative = false;
+                //Microbot.log("Potential Target: " + potentialTarget.getMonsterData().getMonster());
+                if (targetMonsterName.equalsIgnoreCase(potentialTarget.getMonsterData().getMonster())) {
                     switch (potentialTarget) {
                         case NONE:
                             continue;
                         case BIRD:
                             potentialTarget.SetLocation(_config.AlternativeBirdTask().getLocation());
-
-                            slayerTarget = potentialTarget;
-                            taskDeterminedFromAlternative = true;
                             break;
                         case DWARF:
                             potentialTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
-
-                            slayerTarget = potentialTarget;
-                            taskDeterminedFromAlternative = true;
                             break;
                         case KALPHITE:
                             potentialTarget.SetLocation(_config.AlternativeKalphiteTask().getLocation());
-
-                            slayerTarget = potentialTarget;
-                            taskDeterminedFromAlternative = true;
                             break;
                         case WOLF:
                             potentialTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
-
-                            slayerTarget = potentialTarget;
-                            taskDeterminedFromAlternative = true;
                             break;
                         case CRAB:
                             potentialTarget.SetLocation(_config.AlternativeCrabTask().getLocation());
-
-                            slayerTarget = potentialTarget;
-                            taskDeterminedFromAlternative = true;
+                            break;
+                        case HILL_GIANT:
+                            potentialTarget.SetLocation(_config.AlternativeHillGiantTask().getLocation());
+                            break;
+                        case SHADES:
+                            potentialTarget.SetLocation(_config.AlternativeShadeTask().getLocation());
+                            break;
+                        case VAMPYRE:
+                            potentialTarget.SetLocation(_config.AlternativeVampyreTask().getLocation());
                             break;
                     }
-                    if (taskDeterminedFromAlternative) {
-                        Microbot.log("Task has alternative task location.");
-                        currentState = States.MOVING_TO_NEAREST_BANK;
-                        break;
-                    }
+
+                    // Our potential target name is contained within targetMonsterName
+                    // Is it just contained (i.e Goblin with Hobgoblins) or a close match (I.e Goblin to Goblins)
+
+                    Microbot.log("Confirmed assigned target: " + potentialTarget.getMonsterData().getMonster());
+
+                    slayerTarget = potentialTarget;
 
                     currentState = States.MOVING_TO_NEAREST_BANK;
                     break;
                 }
             }
         }
-    }
 
-    List<Rs2NpcModel> GetCombatTargetList()
-    {
-        switch (slayerTarget)
+        if (slayerTarget == CUtil.SlayerTarget.NONE)
         {
-            case BEAR:
-                return Rs2Npc.getAttackableNpcs().filter(npc -> npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster().toLowerCase()))
-                        .collect(Collectors.toList());
+            currentState = States.MOVING_TO_SLAYER_MASTER;
         }
-        return Rs2Npc.getAttackableNpcs(slayerTarget.getMonsterData().getMonster(), false).collect(Collectors.toList());
     }
 
     public void SlayerTaskCompleted()
@@ -727,6 +881,33 @@ public class CardewSlayerScript extends Script {
     public void DeductKillsLeft()
     {
         killsLeft--;
+        if (slayerTarget == CUtil.SlayerTarget.WALL_BEAST)
+        {
+            wallBeastAppeared = false;
+        }
+    }
+
+    public void WallBeastAppeared() { wallBeastAppeared = true; }
+
+    public CardewSlayerScript.States GetCurrentState() { return currentState; }
+
+    public void WalkToMonsterLocationDirect()
+    {
+        if (slayerTarget != CUtil.SlayerTarget.NONE)
+        {
+            if (Rs2WorldPoint.quickDistance(Rs2Player.getWorldLocation(), slayerTarget.getLocation()) > 2)
+            {
+                Rs2Walker.walkTo(slayerTarget.getLocation(), 2);
+            }
+            else
+            {
+                tryForceWalkToMonsterLocation = false;
+            }
+        }
+        else
+        {
+            tryForceWalkToMonsterLocation = false;
+        }
     }
 
     void BuryBones()
