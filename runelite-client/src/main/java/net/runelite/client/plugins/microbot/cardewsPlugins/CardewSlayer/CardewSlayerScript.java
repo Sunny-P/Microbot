@@ -35,6 +35,7 @@ import org.slf4j.event.Level;
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,6 +68,7 @@ public class CardewSlayerScript extends Script {
 
     SlayerMaster currentMaster = SlayerMaster.NONE;
 
+    @Getter
     static int killsLeft = 0;
     String targetMonsterName = "";
     static CUtil.SlayerTarget slayerTarget = CUtil.SlayerTarget.NONE;
@@ -81,6 +83,10 @@ public class CardewSlayerScript extends Script {
     boolean tryForceWalkToMonsterLocation = false;
     int turaelSkipProgress = -1;
 
+    float timeNotInCombat = 0;
+    boolean falseWestTrueEast = false;
+    boolean chosenEastOrWest = false;
+
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
         CUtil.SetMyAntiban(0.0, 2, 15, 0.4);
@@ -90,6 +96,9 @@ public class CardewSlayerScript extends Script {
         lightingLightSource = false;
         hasRequiredItem = false;
         wallBeastAppeared = false;
+        timeNotInCombat = 0;
+        falseWestTrueEast = false;
+        chosenEastOrWest = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -127,9 +136,10 @@ public class CardewSlayerScript extends Script {
                         // Handle emergency teleport/transitioning to banking state
                         if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION)
                         {
-                            Microbot.log("Health percent: " + (double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS));
+                            double playerHealthPercent = (double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS);
+                            Microbot.log("Health percent: " + playerHealthPercent);
                             // If our health drops below a danger threshold?
-                            if ((double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS) < 0.5)
+                            if (playerHealthPercent < 0.5)
                             {
                                 // If we are below half health
                                 currentState = States.MOVING_TO_NEAREST_BANK;
@@ -159,7 +169,51 @@ public class CardewSlayerScript extends Script {
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
-                //System.out.println("Total time for loop " + totalTime);
+
+                if (currentState == States.SLAYING_MONSTER)
+                {
+                    if (!Rs2Player.isInCombat())
+                    {
+                        timeNotInCombat += (float) (totalTime * 0.001); // Track timeNotInCombat as seconds.
+
+                        if (timeNotInCombat > 60)   // OUT OF COMBAT FOR 1 MINUTE
+                        {
+                            if (slayerTarget != CUtil.SlayerTarget.NONE && slayerTarget.getLocation() != null && Rs2Player.getWorldLocation() != null)
+                            {
+                                // If we are nearby the initial slayer location
+                                if (Rs2WorldPoint.quickDistance(Rs2Player.getWorldLocation(), slayerTarget.getLocation()) < 8)
+                                {
+                                    // Run elsewhere
+                                    if (!chosenEastOrWest)
+                                    {
+                                        falseWestTrueEast = ThreadLocalRandom.current().nextBoolean();
+                                        chosenEastOrWest = true;
+                                    }
+                                    else
+                                    {
+                                        WorldPoint runToLocation = falseWestTrueEast
+                                                ? new WorldPoint(slayerTarget.getLocation().getX() + 20, slayerTarget.getLocation().getY(), slayerTarget.getLocation().getPlane())
+                                                : new WorldPoint(slayerTarget.getLocation().getX() - 20, slayerTarget.getLocation().getY(), slayerTarget.getLocation().getPlane());
+
+                                        if (Rs2Walker.canReach(runToLocation))
+                                        {
+                                            Rs2Walker.walkTo(runToLocation);
+                                        }
+                                    }
+                                }
+                                else    // We are not right nearby the initial slayer location
+                                {
+                                    Rs2Walker.walkTo(slayerTarget.getLocation());
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        timeNotInCombat = 0;
+                        chosenEastOrWest = false;
+                    }
+                }
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
@@ -319,7 +373,7 @@ public class CardewSlayerScript extends Script {
                     if (!Rs2Inventory.getInventoryFood().isEmpty())
                     {
                         // Eat some food to clear space for loot
-                        Rs2Player.eatAt(100);
+                        Rs2Player.eatAt(101);
                     }
                 }
 
@@ -341,9 +395,12 @@ public class CardewSlayerScript extends Script {
 
                         Microbot.log("Target: " + target);
 
-                        if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
+                        if (target.getLocalLocation() != null)
                         {
-                            Rs2Camera.turnTo(target);
+                            if (!Rs2Camera.isTileOnScreen(target.getLocalLocation()))
+                            {
+                                Rs2Camera.turnTo(target);
+                            }
                         }
 
                         Rs2Npc.interact(target, "Attack");
@@ -555,6 +612,16 @@ public class CardewSlayerScript extends Script {
                     // We are regearing/banking loot for a current task
                     if (killsLeft > 0)
                     {
+                        // If for some reason our task is NONE
+                        if (slayerTarget == CUtil.SlayerTarget.NONE)
+                        {
+                            if (Rs2Inventory.hasItem(ItemID.SLAYER_GEM))
+                            {
+                                Rs2Inventory.interact(ItemID.SLAYER_GEM, "check");
+                                sleepUntil(() -> slayerTarget != CUtil.SlayerTarget.NONE, 5000);
+                            }
+                        }
+
                         // Check if our task has any requirements in the first place
                         List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
                         if (!requiredItemsList.get(0).equalsIgnoreCase("none") && !hasRequiredItem)
@@ -780,11 +847,11 @@ public class CardewSlayerScript extends Script {
         Matcher matcher = pattern.matcher(chatMsg);
 
         if (matcher.find()) {
-            //targetMonsterName = matcher.group(1).trim();
-            //killsLeft = Integer.parseInt(matcher.group(2));
-            targetMonsterName = Rs2Slayer.getSlayerTask();
+            targetMonsterName = matcher.group(1).trim();
+            killsLeft = Integer.parseInt(matcher.group(2));
+            //targetMonsterName = Rs2Slayer.getSlayerTask();
             targetMonsterName = CUtil.SingularisePluralName(targetMonsterName);
-            killsLeft = Rs2Slayer.getSlayerTaskSize();
+            //killsLeft = Rs2Slayer.getSlayerTaskSize();
 
             Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
 
@@ -799,22 +866,6 @@ public class CardewSlayerScript extends Script {
     void DetermineStateFromSlayerTask(CardewSlayerConfig _config)
     {
         Microbot.log("Entered DetermineStateFromSlayerTask()");
-
-        // Hard coded task value because I haven't interpretted plural words that are spelt differently, like wolves when the task is looking for wolf
-        //if (targetMonsterName.toLowerCase().contains("wolves"))
-        //{
-        //    slayerTarget = CUtil.SlayerTarget.WOLF;
-        //    slayerTarget.SetLocation(_config.AlternativeWolfTask().getLocation());
-        //    currentState = States.MOVING_TO_NEAREST_BANK;
-        //    return;
-        //}
-        //else if (targetMonsterName.toLowerCase().contains("dwarves"))
-        //{
-        //    slayerTarget = CUtil.SlayerTarget.DWARF;
-        //    slayerTarget.SetLocation(_config.AlternativeDwarfTask().getLocation());
-        //    currentState = States.MOVING_TO_NEAREST_BANK;
-        //    return;
-        //}
 
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
             if (potentialTarget.getMonsterData() != null) {
@@ -862,7 +913,7 @@ public class CardewSlayerScript extends Script {
             }
         }
 
-        if (slayerTarget == CUtil.SlayerTarget.NONE)
+        if (slayerTarget == CUtil.SlayerTarget.NONE && killsLeft <= 0)
         {
             currentState = States.MOVING_TO_SLAYER_MASTER;
         }
@@ -876,11 +927,19 @@ public class CardewSlayerScript extends Script {
         slayerTarget = CUtil.SlayerTarget.NONE;
         targetMonsterName = "";
         lootBanked = false;
+        tryForceWalkToMonsterLocation = false;
+
+        // Sleep a moment to try wait for a death animation before we path away from our slayer location
+        // What if we get an item drop we want
+        Global.sleepGaussian(1000, 300);
     }
 
-    public void DeductKillsLeft()
+    public void CalculateKillsLeft()
     {
-        killsLeft--;
+        if (Rs2Slayer.hasSlayerTask())
+        {
+            killsLeft = Rs2Slayer.getSlayerTaskSize();
+        }
         if (slayerTarget == CUtil.SlayerTarget.WALL_BEAST)
         {
             wallBeastAppeared = false;
@@ -920,6 +979,17 @@ public class CardewSlayerScript extends Script {
                 if (action.equalsIgnoreCase("bury"))
                 {
                     Rs2Inventory.interact(boneItem, "bury");
+                }
+            }
+        }
+        if (Rs2Inventory.hasItem(" ashes", false))
+        {
+            Rs2ItemModel ashItem = Rs2Inventory.get(" ashes", false);
+            for (String action : ashItem.getInventoryActions())
+            {
+                if (action.equalsIgnoreCase("scatter"))
+                {
+                    Rs2Inventory.interact(ashItem, "scatter");
                 }
             }
         }
@@ -1004,6 +1074,18 @@ public class CardewSlayerScript extends Script {
                     "bones"
             );
             Rs2GroundItem.lootItemsBasedOnNames(boneItemParams);
+
+            LootingParameters ashItemParams = new LootingParameters(
+                    10,
+                    1,
+                    1,
+                    1,
+                    false,
+                    _config.OnlyLootMyDrops(),
+                    " ashes"
+            );
+            // Hopefully this only loots ashes of a type. Not regular ashes.
+            Rs2GroundItem.lootItemsBasedOnNames(ashItemParams);
         }
     }
 }

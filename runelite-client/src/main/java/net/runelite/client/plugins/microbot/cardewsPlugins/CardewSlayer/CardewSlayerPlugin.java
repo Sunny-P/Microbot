@@ -12,15 +12,11 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.microbot.Microbot;
-import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import java.awt.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @PluginDescriptor(
         name = PluginDescriptor.Cardew + "Slayer",
@@ -113,7 +109,7 @@ public class CardewSlayerPlugin extends Plugin {
         if (event == null) return;
         if (event.getSkill() == Skill.SLAYER)
         {
-            cardewSlayerScript.DeductKillsLeft();
+            cardewSlayerScript.CalculateKillsLeft();
         }
     }
 }

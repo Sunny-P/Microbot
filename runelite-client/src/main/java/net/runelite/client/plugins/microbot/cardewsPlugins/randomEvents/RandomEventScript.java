@@ -342,7 +342,7 @@ public class RandomEventScript extends Script {
                     }
                     else
                     {
-                        Microbot.handlingRandomEvent = true;
+                        //Microbot.handlingRandomEvent = true;
                         Rs2Npc.interact(npc, "Talk-to");
                     }
                     // Otherwise, Talk to the NPC and continue to complete the event
@@ -385,6 +385,7 @@ public class RandomEventScript extends Script {
         // Checking if dialogue is open
         if (Rs2Dialogue.isInDialogue())
         {
+            Microbot.handlingRandomEvent = true;
             Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
         }
         else
@@ -429,6 +430,7 @@ public class RandomEventScript extends Script {
         if (Rs2Widget.hasWidget("Sir, yes sir!"))
         {
             Rs2Widget.clickWidget("Sir, yes sir!");
+            Microbot.handlingRandomEvent = true;
             return;
         }
 
@@ -558,6 +560,7 @@ public class RandomEventScript extends Script {
         {
             activeEvent = RandomEvent.NONE;
             Microbot.handlingRandomEvent = false;
+            return;
         }
         Microbot.log("Exercise to do: " + exerciseToDo);
 
@@ -701,6 +704,7 @@ public class RandomEventScript extends Script {
         boolean chosenFoodItem = false;
         if (Rs2Widget.isWidgetVisible(297, 5))
         {
+            Microbot.handlingRandomEvent = true;
             Widget infoTextWidget = Rs2Widget.getWidget(297, 2);
             SandwichLadyFoodItem targetFoodItem = null;
             for (SandwichLadyFoodItem foodItem : SandwichLadyFoodItem.values())
@@ -878,6 +882,7 @@ public class RandomEventScript extends Script {
                 {
                     Rs2NpcModel npc = Rs2Npc.getNpc("Bee keeper");
                     Rs2Npc.interact(npc, "Talk-to");
+                    Microbot.handlingRandomEvent = true;
                 }
             }
             //NPC Chat Widget ID: S 231.6 DIALOG_NPC_TEXT Id: 15138822
@@ -959,6 +964,12 @@ public class RandomEventScript extends Script {
 
     private void HandleGravediggerEvent()
     {
+        // Can we get the mausoleum object that acts as a deposit box in the gravedigger event?
+        if (Rs2GameObject.getGameObject(ObjectID.GRAVEDIGGER_MAUSOLEUM) != null)
+        {
+            Microbot.handlingRandomEvent = true;
+        }
+
         if (Rs2Inventory.emptySlotCount() < 5 && numItemsToDrop == -99)
         {
             numItemsToDrop = 5 - Rs2Inventory.emptySlotCount();

@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.cardewsPlugins;
 import lombok.Getter;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerTaskMonster;
@@ -20,6 +21,7 @@ public class CUtil {
 
     public static String SingularisePluralName(String plural) {
         String word = plural.toLowerCase();
+        Microbot.log("Tested plural name: " + word);
 
         // Handle known irregulars first
         Map<String, String> irregulars = Map.of(
@@ -44,11 +46,11 @@ public class CUtil {
         {
             return word.substring(0, word.length() - 3) + "f"; // e.g., "wolves" already handled, "shelves" → "shelf"
         }
-        else if (word.endsWith("es"))
-        {
+        //else if (word.endsWith("es")) // IS THIS RELEVANT TO ANY TASKS? THIS WAS MAKING CAVE SLIMES CAVE SLIM
+        //{
             // Handle "boxes", "witches", "bosses"
-            return word.substring(0, word.length() - 2);
-        }
+            //return word.substring(0, word.length() - 2);
+        //}
         else if (word.endsWith("s") && word.length() > 1)
         {
             return word.substring(0, word.length() - 1);
