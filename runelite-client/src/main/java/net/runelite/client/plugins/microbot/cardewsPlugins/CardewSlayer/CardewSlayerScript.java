@@ -683,6 +683,12 @@ public class CardewSlayerScript extends Script {
                             slayerTarget = potentialTarget;
                             taskDeterminedFromAlternative = true;
                             break;
+                        case CRAB:
+                            potentialTarget.SetLocation(_config.AlternativeCrabTask().getLocation());
+
+                            slayerTarget = potentialTarget;
+                            taskDeterminedFromAlternative = true;
+                            break;
                     }
                     if (taskDeterminedFromAlternative) {
                         Microbot.log("Task has alternative task location.");

@@ -61,6 +61,15 @@ public interface CardewSlayerConfig extends Config{
     default CUtil.AlternativeWolfTask AlternativeWolfTask() { return CUtil.AlternativeWolfTask.WHITE_WOLF_LVL25; }
 
     @ConfigItem(
+            name = "Crab Alternative Task",
+            keyName = "crabAlternativeTask",
+            position = 4,
+            description = "The location you will go to for crabs",
+            section = taskAlternativeSection
+    )
+    default CUtil.AlternativeCrabTask AlternativeCrabTask() { return CUtil.AlternativeCrabTask.SAND_CRAB_HOSIDIUS_SOUTH; }
+
+    @ConfigItem(
             name = "Inventory Setup to Use",
             keyName = "inventorySetupToUse",
             position = 2,

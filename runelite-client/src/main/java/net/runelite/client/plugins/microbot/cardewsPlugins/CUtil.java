@@ -60,9 +60,11 @@ public class CUtil {
         CAVE_SLIME(SlayerTaskMonster.CAVE_SLIME, new WorldPoint(3156, 9547, 0)),
         COCKATRICE(SlayerTaskMonster.COCKATRICE, new WorldPoint(2791, 10036, 0)),
         COW(SlayerTaskMonster.COW, new WorldPoint(2667, 3348, 0)),
+        CRAB(SlayerTaskMonster.CRAB, new WorldPoint(0, 0, 0)),
         CRAWLING_HAND(SlayerTaskMonster.CRAWLING_HAND, new WorldPoint(3411, 3538, 0)),
         DOG(SlayerTaskMonster.DOG, new WorldPoint(2669, 3495, 0)),   // Goes to McGrubors wood Guard Dogs. Can extend Alternative tasks if wanted, similar to BIRD.
         DWARF(SlayerTaskMonster.DWARF, new WorldPoint(0, 0, 0)),    // Alt dwarf locations
+        FLESH_CRAWLER(SlayerTaskMonster.FLESH_CRAWLER, new WorldPoint(0, 0, 0)),
         GHOST(SlayerTaskMonster.GHOST, new WorldPoint(1690, 10062, 0)),
         GOBLIN(SlayerTaskMonster.GOBLIN, new WorldPoint(3259, 3228, 0)),
         ICEFIEND(SlayerTaskMonster.ICEFIEND, new WorldPoint(3007, 3474, 0)),
@@ -150,6 +152,21 @@ public class CUtil {
         private final WorldPoint location;
 
         AlternativeWolfTask(String _monsterName, WorldPoint _location)
+        {
+            this.monsterName = _monsterName;
+            this.location = _location;
+        }
+    }
+
+    @Getter
+    public enum AlternativeCrabTask {
+        SAND_CRAB_AVIUM_SAVANNAH("Sand crab", new WorldPoint(1612, 2892, 0)),
+        SAND_CRAB_HOSIDIUS_SOUTH("Sand crab", new WorldPoint(1765, 3468, 0));
+
+        private final String monsterName;
+        private final WorldPoint location;
+
+        AlternativeCrabTask(String _monsterName, WorldPoint _location)
         {
             this.monsterName = _monsterName;
             this.location = _location;
