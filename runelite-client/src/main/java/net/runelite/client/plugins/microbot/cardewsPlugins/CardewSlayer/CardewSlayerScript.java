@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.GameObject;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
@@ -26,6 +27,7 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
+import net.runelite.client.plugins.microbot.util.npc.Rs2NpcManager;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.slayer.Rs2Slayer;
@@ -504,7 +506,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO LIZARD ICE COOLER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
-                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                                && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
                                         .findFirst().orElse(null);
@@ -537,7 +539,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO SALTER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
-                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                                && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("rockslug"))
                                         .findFirst().orElse(null);
@@ -803,7 +805,7 @@ public class CardewSlayerScript extends Script {
     {
         targetList = Rs2Npc.getAttackableNpcs()
                 .filter(npc -> npc != null
-                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                        && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
                         && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                         && npc.getName() != null && npc.getName().toLowerCase().contains(_targetName))
                 .collect(Collectors.toList());

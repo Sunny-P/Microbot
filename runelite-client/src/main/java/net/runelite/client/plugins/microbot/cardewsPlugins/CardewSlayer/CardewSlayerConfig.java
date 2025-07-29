@@ -183,6 +183,14 @@ public interface CardewSlayerConfig extends Config{
             position = 9
     )
     default boolean PickupGrimyHerbs() { return true; }
+
+    @ConfigItem(
+            name = "Enable Prayer Flicking",
+            keyName = "enablePrayerFlicking",
+            description = "Whether or not to prayer flick.<br>This does 1 tick flicking.",
+            position = 10
+    )
+    default boolean EnablePrayerFlicking() { return false; }
 }
 
 

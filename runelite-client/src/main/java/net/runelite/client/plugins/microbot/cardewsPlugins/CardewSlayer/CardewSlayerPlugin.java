@@ -99,11 +99,6 @@ public class CardewSlayerPlugin extends Plugin {
     }
 
     @Subscribe
-    public void onNpcDespawned(NpcDespawned npcDespawned) {
-
-    }
-
-    @Subscribe
     public void onStatChanged(StatChanged event)
     {
         if (event == null) return;
