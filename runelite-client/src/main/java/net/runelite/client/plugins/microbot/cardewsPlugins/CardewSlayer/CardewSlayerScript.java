@@ -89,6 +89,8 @@ public class CardewSlayerScript extends Script {
     boolean falseWestTrueEast = false;
     boolean chosenEastOrWest = false;
 
+    boolean currentlyFlickPrayer = false;
+
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
         CUtil.SetMyAntiban(0.0, 2, 15, 0.4);
@@ -101,6 +103,7 @@ public class CardewSlayerScript extends Script {
         timeNotInCombat = 0;
         falseWestTrueEast = false;
         chosenEastOrWest = false;
+        currentlyFlickPrayer = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -218,7 +221,7 @@ public class CardewSlayerScript extends Script {
                 }
 
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+                System.out.println("Error in CardewSlayerScript " + Arrays.toString(ex.getStackTrace()));
             }
         }, 0, 300, TimeUnit.MILLISECONDS);
         return true;
@@ -383,6 +386,7 @@ public class CardewSlayerScript extends Script {
 
                 if (!Rs2Combat.inCombat())
                 {
+                    currentlyFlickPrayer = false;
                     // Not in combat. Pick a fight.
                     // Check monsters that are already fighting the player
                     if (!npcsInteractingWithPlayer.isEmpty())
@@ -499,6 +503,26 @@ public class CardewSlayerScript extends Script {
                     // We are in combat
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
+                        if (_config.EnablePrayerFlicking())
+                        {
+                            inCombatNpc = npcsInteractingWithPlayer.stream()
+                                    .filter(npc -> npc != null
+                                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
+                                    .findFirst().orElse(null);
+
+                            if (inCombatNpc != null)
+                            {
+                                String enemyAttackStyle = Rs2NpcManager.attackStyleMap.get(inCombatNpc.getId());
+                                Microbot.log("InCombatNpc: " + inCombatNpc.getName() + " " + enemyAttackStyle);
+                                currentlyFlickPrayer = true;
+                            }
+                            else
+                            {
+                                currentlyFlickPrayer = false;
+                            }
+                        }
+
                         // Determine if this is something we need to use a slayer item on to kill
                         switch (slayerTarget)
                         {
@@ -506,7 +530,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO LIZARD ICE COOLER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
-                                                && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
+                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
                                         .findFirst().orElse(null);
@@ -539,7 +563,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO SALTER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
-                                                && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
+                                                && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("rockslug"))
                                         .findFirst().orElse(null);
