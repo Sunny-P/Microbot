@@ -112,24 +112,14 @@ public class CardewSlayerPlugin extends Plugin {
     public void onNpcSpawned(NpcSpawned event) {
         NPC npc = (NPC) event.getActor();
 
-        // Validate: matches slayer target, is attackable, is reachable, etc.
-        if (isValidTarget(npc)) {
-            cardewSlayerScript.TryAddNpcToTargetList(npc, config);
-        }
-    }
+        cardewSlayerScript.TryAddNpcToTargetList(npc, config);
 
-    boolean isValidTarget(NPC npc)
-    {
-        if (npc == null) return false;
-
-        return Objects.requireNonNull(npc.getName()).contains(cardewSlayerScript.GetCurrentSlayerTargetName());
     }
 
     @Subscribe
     public void onNpcDespawned(NpcDespawned event) {
         NPC npc = (NPC) event.getActor();
 
-        // Remove the despawned NPC from your list
-        cardewSlayerScript.TryRemoveNpcFromTargetList(npc);
+        cardewSlayerScript.TryRemoveNpcFromTargetList(npc, config);
     }
 }

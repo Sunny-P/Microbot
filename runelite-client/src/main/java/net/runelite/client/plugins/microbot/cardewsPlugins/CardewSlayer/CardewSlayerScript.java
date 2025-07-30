@@ -879,12 +879,51 @@ public class CardewSlayerScript extends Script {
         return slayerTarget.getMonsterData().getMonster();
     }
 
-    public void TryRemoveNpcFromTargetList(NPC _npc)
+    public void TryRemoveNpcFromTargetList(NPC _npc, CardewSlayerConfig _config)
     {
         if (_npc == null || targetList.isEmpty()) return;
 
-        if (targetList.removeIf(model -> Objects.requireNonNull(model.getName()).equalsIgnoreCase(_npc.getName())))
+        if (currentState == States.SLAYING_MONSTER)
         {
+            //switch (slayerTarget)
+            //{
+            //    case NONE:
+            //        return;
+//
+            //    case BIRD:
+            //        RemoveNpcFromTargetList(_config.AlternativeBirdTask().getMonsterName());
+            //        break;
+            //    case DWARF:
+            //        RemoveNpcFromTargetList(_config.AlternativeDwarfTask().getMonsterName());
+            //        break;
+            //    case KALPHITE:
+            //        RemoveNpcFromTargetList(_config.AlternativeKalphiteTask().getMonsterName());
+            //        break;
+            //    case WOLF:
+            //        RemoveNpcFromTargetList(_config.AlternativeWolfTask().getMonsterName());
+            //        break;
+            //    case CRAB:
+            //        RemoveNpcFromTargetList(_config.AlternativeCrabTask().getMonsterName());
+            //        break;
+            //    case HILL_GIANT:
+            //        RemoveNpcFromTargetList(_config.AlternativeHillGiantTask().getMonsterName());
+            //        break;
+            //    default:
+            //        RemoveNpcFromTargetList(_npc.getName());
+            //        break;
+            //}
+            RemoveNpcFromTargetList(_npc);
+        }
+    }
+
+    private void RemoveNpcFromTargetList(NPC _npc)
+    {
+        //if (targetList.removeIf(model -> Objects.requireNonNull(model.getName()).equalsIgnoreCase(_name)))
+        //{
+            //Microbot.log("NPC despawned and removed from target list: " + _name);
+        //}
+        boolean removed = targetList.removeIf(model -> model.getRuneliteNpc() == _npc);
+        if (removed) {
             Microbot.log("NPC despawned and removed from target list: " + _npc.getName());
         }
     }
