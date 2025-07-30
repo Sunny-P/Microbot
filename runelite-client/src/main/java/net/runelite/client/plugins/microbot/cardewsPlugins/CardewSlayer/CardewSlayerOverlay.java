@@ -24,7 +24,7 @@ public class CardewSlayerOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Cardew Slayer V0.1")
+                    .text("Cardew Slayer V0.2")
                     .color(Color.GREEN)
                     .build());
 

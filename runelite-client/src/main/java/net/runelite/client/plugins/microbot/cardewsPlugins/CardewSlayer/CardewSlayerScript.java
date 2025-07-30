@@ -408,8 +408,14 @@ public class CardewSlayerScript extends Script {
                     {
                         //Microbot.log("NPCs interacting with us list has objects");
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
-                                .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
-                                .findFirst().orElse(null);
+                                // Try and get an npc that matches our task if multiple things are interacting with us
+                                .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                                        && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster()))
+                                .findFirst()
+                                // If it can't find that, fallback to a regular return of the list that we can reach
+                                .orElse(npcsInteractingWithPlayer.stream()
+                                        .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
+                                        .findFirst().orElse(null));
                         assert target != null;
 
                         Microbot.log("Target: " + target);
@@ -485,6 +491,9 @@ public class CardewSlayerScript extends Script {
                                     //        .collect(Collectors.toList());
                                     PopulateTargetList(slayerTarget.getMonsterData().getMonster().toLowerCase());
                                 }
+                                break;
+                            case WOLF:
+                                PopulateTargetList(_config.AlternativeWolfTask().getMonsterName().toLowerCase());
                                 break;
                             default:
                                 // Cases when we should populate our target list
@@ -933,7 +942,7 @@ public class CardewSlayerScript extends Script {
     {
         if (_npc == null) return;
 
-        if (currentState == States.SLAYING_MONSTER)
+        if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION)
         {
             switch (slayerTarget)
             {
