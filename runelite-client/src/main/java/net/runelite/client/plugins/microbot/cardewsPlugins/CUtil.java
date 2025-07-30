@@ -7,6 +7,7 @@ import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerTaskMonster;
 
 import java.awt.*;
@@ -61,6 +62,11 @@ public class CUtil {
         return word;
     }
 
+    /**
+     * Sets most variable settings for Rs2Antiban system.
+     * <br><br>
+     * Note: Call <code>Rs2Antiban.setActivity(Activity activity)</code> after initialising the antiban with this method.
+     */
     public static void SetMyAntiban(double _microbreakChance, int _mbreakDurationLow, int _mbreakDurationHigh, double _actionCooldownChance)
     {
         Rs2Antiban.resetAntibanSettings();
@@ -72,8 +78,8 @@ public class CUtil {
         Rs2AntibanSettings.simulateAttentionSpan = true;
         Rs2AntibanSettings.behavioralVariability = true;
         Rs2AntibanSettings.nonLinearIntervals = true;
-        Rs2AntibanSettings.dynamicIntensity = false;
-        Rs2AntibanSettings.dynamicActivity = false;
+        Rs2AntibanSettings.dynamicIntensity = true;
+        Rs2AntibanSettings.dynamicActivity = true;
         Rs2AntibanSettings.naturalMouse = true;
         Rs2AntibanSettings.simulateMistakes = true;
         Rs2AntibanSettings.moveMouseOffScreen = true;
@@ -83,7 +89,6 @@ public class CUtil {
         Rs2AntibanSettings.microBreakDurationLow = _mbreakDurationLow;
         Rs2AntibanSettings.microBreakDurationHigh = _mbreakDurationHigh;
         Rs2AntibanSettings.microBreakChance = _microbreakChance;
-
         Rs2AntibanSettings.contextualVariability = true;
         Rs2AntibanSettings.actionCooldownChance = _actionCooldownChance;
 

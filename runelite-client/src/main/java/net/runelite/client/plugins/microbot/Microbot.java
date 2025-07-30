@@ -95,7 +95,6 @@ public class Microbot {
 	private static final SpecialAttackConfigs specialAttackConfigs = new SpecialAttackConfigs();
 	public static MenuEntry targetMenu;
 	public static boolean isGainingExp = false;
-	public static boolean bankPinBeingHandled = false;
 	public static boolean handlingRandomEvent = false;
 	public static AtomicBoolean pauseAllScripts = new AtomicBoolean(false);
 	public static String status = "IDLE";

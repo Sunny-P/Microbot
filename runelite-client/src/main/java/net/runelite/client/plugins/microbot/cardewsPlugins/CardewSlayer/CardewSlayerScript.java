@@ -15,6 +15,8 @@ import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.Rs2InventorySetup;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
@@ -100,6 +102,7 @@ public class CardewSlayerScript extends Script {
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
         CUtil.SetMyAntiban(0.0, 2, 15, 0.4);
+        Rs2Antiban.setActivity(Activity.GENERAL_SLAYER);
 
         slayerGemChecked = false;
         lootBanked = false;
@@ -115,7 +118,6 @@ public class CardewSlayerScript extends Script {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
-                if (Microbot.bankPinBeingHandled) return;
                 if (Microbot.pauseAllScripts.get()) return;
                 if (Microbot.handlingRandomEvent) return;
                 long startTime = System.currentTimeMillis();
@@ -158,6 +160,7 @@ public class CardewSlayerScript extends Script {
                         }
                     }
                 }
+                if (Rs2AntibanSettings.microBreakActive) return;
 
                 if (!Rs2Inventory.isFull())
                 {

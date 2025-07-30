@@ -45,6 +45,15 @@ public interface ThievingConfig extends Config {
         return false;
     }
 
+    @ConfigItem(
+            keyName = "keepSeedBox",
+            name = "Keep Seed Box For Master Farmer?",
+            description = "Doesn't deposit Seed Box and empties it while banking.<br>Leave the seed box Open to autofill while thieving.",
+            position = 2,
+            section = generalSection
+    )
+    default boolean keepSeedBox() { return false; }
+
     @ConfigSection(
             name = "Buffs",
             description = "Buffs and spell-casting options.",

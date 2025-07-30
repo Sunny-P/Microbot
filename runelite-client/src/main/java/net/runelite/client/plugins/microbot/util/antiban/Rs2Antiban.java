@@ -281,6 +281,72 @@ public class Rs2Antiban {
 
     }
 
+    /**
+     * <h2>Handles the Execution of an Action Cooldown Based on Anti-Ban Behaviors</h2>
+     * <p>
+     * This method controls the flow for activating the cooldown either with certainty or based on a chance.
+     * It includes logic to adjust behaviors such as non-linear intervals, behavioral variability, and random mouse movements
+     * to simulate more human-like actions.
+     * </p>
+     * <p>
+     * Execute this method at any point in your script where you want to trigger an action cooldown.
+     * </p>
+     * <p>
+     * The cooldown can be triggered directly if <code>actionCooldownChance</code> is 1.00 (100%),
+     * or by chance if <code>actionCooldownChance</code> is less than 1.00 (100%). Several features like universal antiban,
+     * non-linear intervals, and play style evolution are configurable through <code>Rs2AntibanSettings</code>.
+     * </p>
+     *
+     * <h3>Primary Actions Handled:</h3>
+     * <ul>
+     *   <li>Pausing all scripts if the universal antiban is enabled.</li>
+     *   <li>Evolving play style if non-linear intervals are enabled.</li>
+     *   <li>Setting a timeout based on behavioral variability settings.</li>
+     *   <li>Optionally moving the mouse randomly or off-screen based on respective settings.</li>
+     * </ul>
+     *
+     * <h3>Preconditions:</h3>
+     * <ul>
+     *   <li>If <code>Rs2AntibanSettings.usePlayStyle</code> is disabled, the cooldown will not be performed.</li>
+     * </ul>
+     *
+     * <h3>Main Flow:</h3>
+     * <ul>
+     *   <li>If <code>actionCooldownChance</code> &lt; 1.00 (100%), the cooldown is triggered based on the result of a random dice roll.</li>
+     *   <li>If <code>actionCooldownChance</code> is 1.00 (100%) or greater, the cooldown is triggered unconditionally.</li>
+     * </ul>
+     *
+     * <h3>Helper Methods:</h3>
+     * <p>
+     * <code>performActionCooldown()</code> encapsulates the shared logic for performing the cooldown,
+     * adjusting the play style, and invoking other anti-ban actions like moving the mouse randomly or off-screen.
+     * </p>
+     *
+     * <h3>Returns:</h3>
+     * <p>
+     * Returns <code>true</code> if an actionCooldown was activated, returns <code>false</code> otherwise.
+     * </p>
+     */
+    public static boolean didActionCooldown() {
+        if (!Rs2AntibanSettings.usePlayStyle) {
+            logDebug("PlayStyle not enabled, cannot perform action cooldown");
+            return false;
+        }
+        if (Rs2AntibanSettings.actionCooldownChance == 1.0) {
+            performActionCooldown();
+            return true;
+        }
+        if (Rs2AntibanSettings.actionCooldownChance <= 0.0) {
+            logDebug("Action cooldown chance is 0%, cannot perform action cooldown");
+            return false;
+        }
+        if (Rs2AntibanSettings.actionCooldownChance <= 0.99 && Rs2Random.diceFractional(Rs2AntibanSettings.actionCooldownChance)) {
+            performActionCooldown();
+            return true;
+        }
+        return false;
+    }
+
     private static void logDebug(String message) {
         if (Rs2AntibanSettings.devDebug) {
             Microbot.log("<col=f44336>" + message + "</col>");

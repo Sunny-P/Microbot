@@ -11,6 +11,7 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
@@ -79,7 +80,6 @@ public class AIOCamdozScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (Microbot.pauseAllScripts.get()) return;
-                if (Microbot.bankPinBeingHandled) return;
                 if (Rs2AntibanSettings.microBreakActive) return;
                 if (Microbot.handlingRandomEvent) return;
                 long startTime = System.currentTimeMillis();
@@ -171,6 +171,7 @@ public class AIOCamdozScript extends Script {
                 break;
 
             case MINING:
+                Rs2Antiban.setActivity(Activity.GENERAL_MINING);
                 if (!Rs2Equipment.isWearing(pickaxeToUse) && !Rs2Inventory.hasItem(pickaxeToUse))
                 {
                     state = State.WALKING_TO_BANK;
@@ -248,6 +249,7 @@ public class AIOCamdozScript extends Script {
                 break;
 
             case PROCESSING:
+                Rs2Antiban.setActivity(Activity.GENERAL_SMITHING);
                 // ObjectName = "Barronite Crusher"
                 // Check if the inventory contains barronite to crush
                 // "Barronite deposit" ItemID = 25684
@@ -427,6 +429,7 @@ public class AIOCamdozScript extends Script {
                 break;
 
             case FISHING:
+                Rs2Antiban.setActivity(Activity.GENERAL_FISHING);
                 if (!Rs2Inventory.hasItem(netToUse))
                 {
                     state = State.WALKING_TO_BANK;
@@ -659,6 +662,7 @@ public class AIOCamdozScript extends Script {
                 break;
 
             case PROCESSING:
+                Rs2Antiban.setActivity(Activity.GENERAL_COMBAT);
                 // FIGHTING
 
                 if (!Rs2Inventory.isFull())

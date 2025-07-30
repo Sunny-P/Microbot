@@ -8,6 +8,7 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
@@ -32,13 +33,13 @@ public class LineFiremakerScript extends Script {
         firemakeLocation = null;
         burnLogs = true;
         CUtil.SetMyAntiban(0.06, 2, 15, 0.6);
+        Rs2Antiban.setActivity(Activity.GENERAL_FIREMAKING);
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 if (Microbot.pauseAllScripts.get()) return;
-                if (Microbot.bankPinBeingHandled) return;
                 if (Rs2AntibanSettings.microBreakActive) return;
                 if (Microbot.handlingRandomEvent) return;
                 long startTime = System.currentTimeMillis();

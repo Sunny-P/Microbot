@@ -4,6 +4,11 @@ import com.google.inject.Inject;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.ObjectComposition;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
@@ -27,6 +32,7 @@ public class ThievingScript extends Script {
     private final ThievingPlugin plugin;
     private static final int DARKMEYER_REGION = 14388;
     private enum State {IDLE, BANK, PICKPOCKET}
+    private boolean didActionCooldown = false;
     public State currentState = State.IDLE;
 
     private static final Set<String> VYRE_SET = Set.of(
@@ -75,6 +81,8 @@ public class ThievingScript extends Script {
 
     public boolean run() {
         Microbot.isCantReachTargetDetectionEnabled = true;
+        CUtil.SetMyAntiban(0.0, 2, 15, 0.01);
+        Rs2Antiban.setActivity(Activity.GENERAL_THIEVING);
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn() || !super.run()) return;
@@ -92,10 +100,19 @@ public class ThievingScript extends Script {
                         currentState = State.IDLE;
                         break;
                     case PICKPOCKET:
+                        if (Rs2AntibanSettings.actionCooldownActive) return;
                         if (Rs2Player.isStunned()) {
+                            if (!didActionCooldown)
+                            {
+                                if (Rs2Antiban.didActionCooldown())
+                                {
+                                    didActionCooldown = true;
+                                }
+                            }
                             sleepUntil(() -> !Rs2Player.isStunned(), 8000);
                             return;
                         }
+                        didActionCooldown = false;
                         wearIfNot("dodgy necklace");
 
                         if (!autoEatAndDrop()) {
@@ -334,7 +351,16 @@ public class ThievingScript extends Script {
         if (bank == BankLocation.DARKMEYER) equipSet(VYRE_SET);
         boolean opened = Rs2Bank.isNearBank(bank, 8) ? Rs2Bank.openBank() : Rs2Bank.walkToBankAndUseBank(bank);
         if (!opened || !Rs2Bank.isOpen()) return;
-        Rs2Bank.depositAll();
+        if (config.keepSeedBox())
+        {
+            Rs2Bank.depositAllExcept(ItemID.SEED_BOX, ItemID.SEED_BOX_OPEN);
+            Rs2Inventory.waitForInventoryChanges(3000);
+            Rs2Inventory.interact("seed box", "empty", false);
+        }
+        else
+        {
+            Rs2Bank.depositAll();
+        }
 
         boolean successfullyWithdrawFood = Rs2Bank.withdrawX(true, config.food().getName(), config.foodAmount(), true);
         Rs2Inventory.waitForInventoryChanges(3000);
@@ -355,6 +381,10 @@ public class ThievingScript extends Script {
             if (foodWasEat) {
                 Set<String> keep = new HashSet<>();
                 Rs2Inventory.getInventoryFood().forEach(food -> keep.add(food.getName()));
+                if (config.keepSeedBox())
+                {
+                    keep.add(Rs2Inventory.get("seed box", false).getName());
+                }
                 Rs2Bank.depositAll(x -> !keep.contains(x.getName()));
 
                 int foodActual = Rs2Inventory.getInventoryFood().size();

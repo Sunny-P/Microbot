@@ -58,7 +58,6 @@ public class RandomEventScript extends Script {
             try {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
-                if (Microbot.bankPinBeingHandled) return;
                 if (Microbot.pauseAllScripts.get()) return;
                 long startTime = System.currentTimeMillis();
 

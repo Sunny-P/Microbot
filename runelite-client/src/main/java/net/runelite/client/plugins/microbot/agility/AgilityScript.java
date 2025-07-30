@@ -20,6 +20,7 @@ import net.runelite.client.plugins.microbot.agility.courses.WerewolfCourse;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
@@ -58,6 +59,7 @@ public class AgilityScript extends Script
 		Rs2Antiban.resetAntibanSettings();
 		Rs2Antiban.antibanSetupTemplates.applyAgilitySetup();
 		CUtil.SetMyAntiban(0.04, 2, 12, 0.5);
+		Rs2Antiban.setActivity(Activity.GENERAL_AGILITY);
 		startPoint = plugin.getCourseHandler().getStartPoint();
 		mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
 			try
