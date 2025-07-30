@@ -54,16 +54,36 @@ public class CardewSlayerPlugin extends Plugin {
         overlayManager.remove(cardewSlayerOverlay);
     }
 
-    int ticks = 10;
+    boolean prayerFlickState = false;
+    boolean lastFlickState = false;
     @Subscribe
     public void onGameTick(GameTick tick)
     {
         //System.out.println(getName().chars().mapToObj(i -> (char)(i + 3)).map(String::valueOf).collect(Collectors.joining()));
 
-        if (ticks > 0) {
-            ticks--;
+        if (cardewSlayerScript.ShouldPrayerFlick()) {
+            // Toggle flick state on each tick
+            prayerFlickState = !prayerFlickState;
+
+            // Sync actual game prayer state
+            //boolean prayerEnabled = Rs2Prayer.isEnabled(protectPrayer);
+//
+            //if (prayerFlickState && !prayerEnabled) {
+            //    Rs2Prayer.toggle(protectPrayer, true);
+            //    lastFlickState = true;
+            //} else if (!prayerFlickState && lastFlickState) {
+            //    Rs2Prayer.toggle(protectPrayer, false);
+            //    lastFlickState = false;
+            //}
         } else {
-            ticks = 10;
+            // Make sure prayer is OFF when not flicking
+            //if (Rs2Prayer.isEnabled(protectPrayer)) {
+            //    Rs2Prayer.toggle(protectPrayer, false);
+            //}
+
+            // Reset internal state
+            prayerFlickState = false;
+            lastFlickState = false;
         }
 
     }

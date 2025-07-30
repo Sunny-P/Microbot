@@ -400,7 +400,7 @@ public class CardewSlayerScript extends Script {
 
                 if (!Rs2Combat.inCombat())
                 {
-                    Microbot.log("We are NOT in combat.");
+                    //Microbot.log("We are NOT in combat.");
                     currentlyFlickPrayer = false;
                     // Not in combat. Pick a fight.
                     // Check monsters that are already fighting the player
@@ -429,7 +429,7 @@ public class CardewSlayerScript extends Script {
                         }
 
                         Rs2Npc.interact(target, "Attack");
-                        Rs2Antiban.actionCooldown();
+                        //Rs2Antiban.actionCooldown();
                     }
                     else
                     {
@@ -505,9 +505,12 @@ public class CardewSlayerScript extends Script {
                         if (!targetList.isEmpty())
                         {
                             Rs2NpcModel target = targetList.stream()
+                                    .filter(npc -> npc.getComposition() != null && Arrays.stream(npc.getComposition()
+                                            .getActions()).anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
                                     .findFirst()
                                     .orElse(null);
 
+                            assert target != null;
                             if (target.getLocalLocation() != null)
                             {
                                 // If monster is not in camera, turn to it
@@ -518,13 +521,13 @@ public class CardewSlayerScript extends Script {
                             }
 
                             Rs2Npc.interact(target, "Attack");
-                            Rs2Antiban.actionCooldown();
+                            //Rs2Antiban.actionCooldown();
                         }
                     }
                 }
                 else
                 {
-                    Microbot.log("We are in combat.");
+                    //Microbot.log("We are in combat.");
                     Rs2NpcModel inCombatNpc;
                     // We are in combat
                     if (!npcsInteractingWithPlayer.isEmpty())
@@ -541,6 +544,7 @@ public class CardewSlayerScript extends Script {
                             if (inCombatNpc != null)
                             {
                                 String enemyAttackStyle = Rs2NpcManager.attackStyleMap.get(inCombatNpc.getId());
+                                // Assuming for MELEE: returned values will be: "Crush" "Stab" "Slash"
                                 Microbot.log("InCombatNpc: " + inCombatNpc.getName() + " " + enemyAttackStyle);
                                 currentlyFlickPrayer = true;
                             }
@@ -967,6 +971,9 @@ public class CardewSlayerScript extends Script {
                 case HILL_GIANT:
                     AddNpcToTargetListWithValidation(_npc, _config.AlternativeHillGiantTask().getMonsterName());
                     break;
+                case SHADES:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeShadeTask().getMonsterName());
+                    break;
                 default:
                     AddNpcToTargetListWithValidation(_npc, slayerTarget.getMonsterData().getMonster());
                     break;
@@ -980,12 +987,19 @@ public class CardewSlayerScript extends Script {
         {
             if (Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
                     && (_npc.getInteracting() == null || _npc.getInteracting() == Microbot.getClient().getLocalPlayer())
-                    && _npc.getWorldLocation() != null && Rs2Walker.canReach(_npc.getWorldLocation()))
+                    && _npc.getWorldLocation() != null && Rs2Walker.canReach(_npc.getWorldLocation())
+                    && _npc.getComposition() != null && Arrays.stream(_npc.getComposition()
+                    .getActions()).anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
             {
                 targetList.add(new Rs2NpcModel(_npc));
                 Microbot.log("NPC spawned and added to target list: " + _npc.getName());
             }
         }
+    }
+
+    public boolean ShouldPrayerFlick()
+    {
+        return currentlyFlickPrayer;
     }
 
     void CheckForAndOpenSeedbox()
