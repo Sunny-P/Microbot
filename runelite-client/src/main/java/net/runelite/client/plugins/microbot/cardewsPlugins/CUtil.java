@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.cardewsPlugins;
 import lombok.Getter;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
@@ -180,18 +181,20 @@ public class CUtil {
 
     @Getter
     public enum AlternativeKalphiteTask {
-        KALPHITE_WORKER_LVL28_EAST("Kalphite Worker", new WorldPoint(3322, 9502, 0)),
-        KALPHITE_WORKER_LVL28_NORTHWEST("Kalphite Worker", new WorldPoint(3279, 9519, 0)),
-        KALPHITE_SOLDIER_LVL85_NORTH("Kalphite Soldier", new WorldPoint(3309, 9522, 0)),
-        KALPHITE_SOLDIER_LVL85_SOUTH("Kalphite Soldier", new WorldPoint(3314, 9481, 0)),
-        KALPHITE_GUARDIAN_LVL141("Kalphite Guardian", new WorldPoint(3280, 9498, 0));
+        KALPHITE_WORKER_LVL28_EAST("Kalphite Worker", NpcID.KALPHITE_WORKER_STRONGHOLDCAVE, new WorldPoint(3322, 9502, 0)),
+        KALPHITE_WORKER_LVL28_NORTHWEST("Kalphite Worker", NpcID.KALPHITE_WORKER_STRONGHOLDCAVE, new WorldPoint(3279, 9519, 0)),
+        KALPHITE_SOLDIER_LVL85_NORTH("Kalphite Soldier", NpcID.KALPHITE_SOLDIER_STRONGHOLDCAVE, new WorldPoint(3309, 9522, 0)),
+        KALPHITE_SOLDIER_LVL85_SOUTH("Kalphite Soldier", NpcID.KALPHITE_SOLDIER_STRONGHOLDCAVE, new WorldPoint(3314, 9481, 0)),
+        KALPHITE_GUARDIAN_LVL141("Kalphite Guardian", NpcID.KALPHITE_LORD_STRONGHOLDCAVE, new WorldPoint(3280, 9498, 0));
 
         private final String monsterName;
+        private final int id;
         private final WorldPoint location;
 
-        AlternativeKalphiteTask(String _monsterName, WorldPoint _location)
+        AlternativeKalphiteTask(String _monsterName, int _id, WorldPoint _location)
         {
             this.monsterName = _monsterName;
+            this.id = _id;
             this.location = _location;
         }
     }

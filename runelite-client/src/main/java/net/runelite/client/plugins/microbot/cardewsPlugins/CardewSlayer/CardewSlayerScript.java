@@ -386,16 +386,20 @@ public class CardewSlayerScript extends Script {
 
                 if (!Rs2Combat.inCombat())
                 {
+                    Microbot.log("We are NOT in combat.");
                     currentlyFlickPrayer = false;
                     // Not in combat. Pick a fight.
                     // Check monsters that are already fighting the player
+                    npcsInteractingWithPlayer = npcsInteractingWithPlayer.stream()
+                            .filter(npc -> npc.getComposition() != null &&
+                                    Arrays.stream(npc.getComposition().getActions())
+                                            .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
+                            .collect(Collectors.toList());  // Filter to make sure we only care about attackable npcs.
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
+                        Microbot.log("NPCs interacting with us list has objects");
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
-                                .filter(npc -> npc.getComposition() != null
-                                        && Arrays.stream(npc.getComposition().getActions())
-                                        .anyMatch(action -> action != null && action.toLowerCase().contains("attack"))
-                                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
+                                .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
                                 .findFirst().orElse(null);
                         assert target != null;
 
@@ -414,12 +418,14 @@ public class CardewSlayerScript extends Script {
                     }
                     else
                     {
+                        Microbot.log("NPCs interacting with us list is empty");
                         // We don't have any monsters currently in combat with us
                         // Pick a fresh target
                         switch (slayerTarget)
                         {
                             case KALPHITE:
-                                PopulateTargetList(_config.AlternativeKalphiteTask().getMonsterName().toLowerCase());
+                                Microbot.log("About to populate our target list..");
+                                PopulateTargetList(_config.AlternativeKalphiteTask().getId());
                                 break;
                             case MOGRE:
                                 // IF WE ARE KILLING MOGRES & WE DON'T ALREADY HAVE A MOGRE ATTACKING US
@@ -475,7 +481,7 @@ public class CardewSlayerScript extends Script {
                                 PopulateTargetList(slayerTarget.getMonsterData().getMonster().toLowerCase());
                                 break;
                         }
-                        //Microbot.log("TargetList: " + targetList);
+                        Microbot.log("TargetList: " + targetList);
 
                         if (!targetList.isEmpty())
                         {
@@ -499,6 +505,7 @@ public class CardewSlayerScript extends Script {
                 }
                 else
                 {
+                    Microbot.log("We are in combat.");
                     Rs2NpcModel inCombatNpc;
                     // We are in combat
                     if (!npcsInteractingWithPlayer.isEmpty())
@@ -507,6 +514,7 @@ public class CardewSlayerScript extends Script {
                         {
                             inCombatNpc = npcsInteractingWithPlayer.stream()
                                     .filter(npc -> npc != null
+                                            && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
                                             && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                                             && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
                                     .findFirst().orElse(null);
@@ -530,6 +538,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO LIZARD ICE COOLER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
+                                                && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
                                                 && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("lizard"))
@@ -563,6 +572,7 @@ public class CardewSlayerScript extends Script {
                                 // IF WE DONT HAVE AUTO SALTER SLAYER PERK
                                 inCombatNpc = npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc != null
+                                                && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
                                                 && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                                                 && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                                 && npc.getName() != null && npc.getName().toLowerCase().contains("rockslug"))
@@ -829,9 +839,21 @@ public class CardewSlayerScript extends Script {
     {
         targetList = Rs2Npc.getAttackableNpcs()
                 .filter(npc -> npc != null
-                        && Rs2Player.getLocalPlayer() != null && (npc.getInteracting() == null || npc.getInteracting() == Rs2Player.getLocalPlayer())
+                        && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
+                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
                         && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                         && npc.getName() != null && npc.getName().toLowerCase().contains(_targetName))
+                .collect(Collectors.toList());
+    }
+
+    void PopulateTargetList(int _id)
+    {
+        targetList = Rs2Npc.getAttackableNpcs()
+                .filter(npc -> npc != null
+                        && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
+                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                        && npc.getId() == _id)
                 .collect(Collectors.toList());
     }
 
