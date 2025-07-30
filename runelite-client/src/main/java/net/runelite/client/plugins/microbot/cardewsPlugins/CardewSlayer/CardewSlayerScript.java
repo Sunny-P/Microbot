@@ -611,6 +611,7 @@ public class CardewSlayerScript extends Script {
                 if (Rs2Walker.walkTo(Rs2Bank.getNearestBank().getWorldPoint()))
                 {
                     currentState = States.BANKING;
+                    Rs2Antiban.takeMicroBreakByChance();
                 }
                 break;
 
