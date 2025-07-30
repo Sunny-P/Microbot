@@ -81,11 +81,11 @@ public class ThievingScript extends Script {
 
     public boolean run() {
         Microbot.isCantReachTargetDetectionEnabled = true;
-        CUtil.SetMyAntiban(0.0, 2, 15, 0.01);
+        CUtil.SetMyAntiban(0.0, 2, 15, 0.06);
         Rs2Antiban.setActivity(Activity.GENERAL_THIEVING);
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                if (!Microbot.isLoggedIn() || !super.run()) return;
+                if (!Microbot.isLoggedIn() || !super.run() || Microbot.handlingRandomEvent) return;
                 if (initialPlayerLocation == null) initialPlayerLocation = Rs2Player.getWorldLocation();
                 switch(currentState) {
                     case IDLE:
