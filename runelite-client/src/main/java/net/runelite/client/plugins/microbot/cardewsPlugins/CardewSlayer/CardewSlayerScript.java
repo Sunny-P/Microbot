@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.runelite.api.GameObject;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
+import net.runelite.api.NPC;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
@@ -37,6 +38,7 @@ import org.slf4j.event.Level;
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -74,8 +76,12 @@ public class CardewSlayerScript extends Script {
     static int killsLeft = 0;
     String targetMonsterName = "";
     static CUtil.SlayerTarget slayerTarget = CUtil.SlayerTarget.NONE;
-    private List<Rs2NpcModel> targetList = new ArrayList<>();
-    List<Rs2NpcModel> npcsInteractingWithPlayer = new ArrayList<>();
+
+    private List<Rs2NpcModel> targetList = new CopyOnWriteArrayList<>();
+    List<Rs2NpcModel> npcsInteractingWithPlayer = new CopyOnWriteArrayList<>();
+    float timeSinceLastListUpdate = 0;
+    double listRepopulateDelay = 5;
+
     boolean slayerGemChecked = false;
     boolean lootBanked = false;
     boolean lightingLightSource = false;
@@ -175,11 +181,15 @@ public class CardewSlayerScript extends Script {
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
 
+                float deltaTime = (float) (totalTime * 0.001);
+
                 if (currentState == States.SLAYING_MONSTER)
                 {
+                    timeSinceLastListUpdate += deltaTime;
+
                     if (!Rs2Player.isInCombat())
                     {
-                        timeNotInCombat += (float) (totalTime * 0.001); // Track timeNotInCombat as seconds.
+                        timeNotInCombat += deltaTime; // Track timeNotInCombat as seconds.
 
                         if (timeNotInCombat > 60)   // OUT OF COMBAT FOR 1 MINUTE
                         {
@@ -370,8 +380,6 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case SLAYING_MONSTER:
-                targetList.clear();
-                npcsInteractingWithPlayer.clear();
                 if (Rs2Inventory.isFull())
                 {
                     // Check inventory for food
@@ -381,8 +389,14 @@ public class CardewSlayerScript extends Script {
                         Rs2Player.eatAt(101);
                     }
                 }
-
-                npcsInteractingWithPlayer = Rs2Npc.getNpcsForPlayer().collect(Collectors.toList());
+                if (npcsInteractingWithPlayer.isEmpty() || timeSinceLastListUpdate >= listRepopulateDelay)
+                {
+                    npcsInteractingWithPlayer = Rs2Npc.getNpcsForPlayer()
+                            .filter(npc -> npc.getComposition() != null &&
+                                    Arrays.stream(npc.getComposition().getActions())
+                                            .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
+                            .collect(Collectors.toList());  // Filter to make sure we only care about attackable npcs.
+                }
 
                 if (!Rs2Combat.inCombat())
                 {
@@ -390,14 +404,9 @@ public class CardewSlayerScript extends Script {
                     currentlyFlickPrayer = false;
                     // Not in combat. Pick a fight.
                     // Check monsters that are already fighting the player
-                    npcsInteractingWithPlayer = npcsInteractingWithPlayer.stream()
-                            .filter(npc -> npc.getComposition() != null &&
-                                    Arrays.stream(npc.getComposition().getActions())
-                                            .anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
-                            .collect(Collectors.toList());  // Filter to make sure we only care about attackable npcs.
                     if (!npcsInteractingWithPlayer.isEmpty())
                     {
-                        Microbot.log("NPCs interacting with us list has objects");
+                        //Microbot.log("NPCs interacting with us list has objects");
                         Rs2NpcModel target = npcsInteractingWithPlayer.stream()
                                 .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
                                 .findFirst().orElse(null);
@@ -418,13 +427,13 @@ public class CardewSlayerScript extends Script {
                     }
                     else
                     {
-                        Microbot.log("NPCs interacting with us list is empty");
+                        //Microbot.log("NPCs interacting with us list is empty");
                         // We don't have any monsters currently in combat with us
                         // Pick a fresh target
                         switch (slayerTarget)
                         {
                             case KALPHITE:
-                                Microbot.log("About to populate our target list..");
+                                //Microbot.log("About to populate our target list..");
                                 PopulateTargetList(_config.AlternativeKalphiteTask().getId());
                                 break;
                             case MOGRE:
@@ -478,10 +487,11 @@ public class CardewSlayerScript extends Script {
                                 }
                                 break;
                             default:
+                                // Cases when we should populate our target list
                                 PopulateTargetList(slayerTarget.getMonsterData().getMonster().toLowerCase());
                                 break;
                         }
-                        Microbot.log("TargetList: " + targetList);
+                        //Microbot.log("TargetList: " + targetList);
 
                         if (!targetList.isEmpty())
                         {
@@ -837,24 +847,96 @@ public class CardewSlayerScript extends Script {
 
     void PopulateTargetList(String _targetName)
     {
-        targetList = Rs2Npc.getAttackableNpcs()
-                .filter(npc -> npc != null
-                        && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
-                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
-                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
-                        && npc.getName() != null && npc.getName().toLowerCase().contains(_targetName))
-                .collect(Collectors.toList());
+        if (targetList.isEmpty())
+        {
+            Microbot.log("CardewSlayer TargetList is Empty. Manually repopulating!");
+            targetList = Rs2Npc.getAttackableNpcs()
+                    .filter(npc -> npc != null
+                            && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
+                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                            && npc.getName() != null && npc.getName().toLowerCase().contains(_targetName))
+                    .collect(Collectors.toList());
+        }
     }
 
     void PopulateTargetList(int _id)
     {
-        targetList = Rs2Npc.getAttackableNpcs()
-                .filter(npc -> npc != null
-                        && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
-                        && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
-                        && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
-                        && npc.getId() == _id)
-                .collect(Collectors.toList());
+        if (targetList.isEmpty()) {
+            Microbot.log("CardewSlayer TargetList is Empty. Manually repopulating!");
+            targetList = Rs2Npc.getAttackableNpcs()
+                    .filter(npc -> npc != null
+                            && Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
+                            && (npc.getInteracting() == null || npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                            && npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
+                            && npc.getId() == _id)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public String GetCurrentSlayerTargetName()
+    {
+        return slayerTarget.getMonsterData().getMonster();
+    }
+
+    public void TryRemoveNpcFromTargetList(NPC _npc)
+    {
+        if (_npc == null || targetList.isEmpty()) return;
+
+        if (targetList.removeIf(model -> Objects.requireNonNull(model.getName()).equalsIgnoreCase(_npc.getName())))
+        {
+            Microbot.log("NPC despawned and removed from target list: " + _npc.getName());
+        }
+    }
+
+    public void TryAddNpcToTargetList(NPC _npc, CardewSlayerConfig _config)
+    {
+        if (_npc == null) return;
+
+        if (currentState == States.SLAYING_MONSTER)
+        {
+            switch (slayerTarget)
+            {
+                case NONE:
+                    return;
+
+                case BIRD:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeBirdTask().getMonsterName());
+                    break;
+                case DWARF:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeDwarfTask().getMonsterName());
+                    break;
+                case KALPHITE:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeKalphiteTask().getMonsterName());
+                    break;
+                case WOLF:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeWolfTask().getMonsterName());
+                    break;
+                case CRAB:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeCrabTask().getMonsterName());
+                    break;
+                case HILL_GIANT:
+                    AddNpcToTargetListWithValidation(_npc, _config.AlternativeHillGiantTask().getMonsterName());
+                    break;
+                default:
+                    AddNpcToTargetListWithValidation(_npc, slayerTarget.getMonsterData().getMonster());
+                    break;
+            }
+        }
+    }
+
+    private void AddNpcToTargetListWithValidation(NPC _npc, String _target)
+    {
+        if (Objects.requireNonNull(_npc.getName()).contains(_target))
+        {
+            if (Microbot.getClient() != null && Microbot.getClient().getLocalPlayer() != null
+                    && (_npc.getInteracting() == null || _npc.getInteracting() == Microbot.getClient().getLocalPlayer())
+                    && _npc.getWorldLocation() != null && Rs2Walker.canReach(_npc.getWorldLocation()))
+            {
+                targetList.add(new Rs2NpcModel(_npc));
+                Microbot.log("NPC spawned and added to target list: " + _npc.getName());
+            }
+        }
     }
 
     void CheckForAndOpenSeedbox()
@@ -976,6 +1058,7 @@ public class CardewSlayerScript extends Script {
         targetMonsterName = "";
         lootBanked = false;
         tryForceWalkToMonsterLocation = false;
+        targetList.clear();
 
         // Sleep a moment to try wait for a death animation before we path away from our slayer location
         // What if we get an item drop we want

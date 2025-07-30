@@ -3,20 +3,20 @@ package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.NPC;
 import net.runelite.api.Skill;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.NpcDespawned;
-import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.*;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import java.awt.*;
+import java.util.Objects;
 
 @PluginDescriptor(
         name = PluginDescriptor.Cardew + "Slayer",
@@ -106,5 +106,30 @@ public class CardewSlayerPlugin extends Plugin {
         {
             cardewSlayerScript.CalculateKillsLeft();
         }
+    }
+
+    @Subscribe
+    public void onNpcSpawned(NpcSpawned event) {
+        NPC npc = (NPC) event.getActor();
+
+        // Validate: matches slayer target, is attackable, is reachable, etc.
+        if (isValidTarget(npc)) {
+            cardewSlayerScript.TryAddNpcToTargetList(npc, config);
+        }
+    }
+
+    boolean isValidTarget(NPC npc)
+    {
+        if (npc == null) return false;
+
+        return Objects.requireNonNull(npc.getName()).contains(cardewSlayerScript.GetCurrentSlayerTargetName());
+    }
+
+    @Subscribe
+    public void onNpcDespawned(NpcDespawned event) {
+        NPC npc = (NPC) event.getActor();
+
+        // Remove the despawned NPC from your list
+        cardewSlayerScript.TryRemoveNpcFromTargetList(npc);
     }
 }
