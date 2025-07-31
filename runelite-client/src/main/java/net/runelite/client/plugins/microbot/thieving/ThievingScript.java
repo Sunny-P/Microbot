@@ -356,6 +356,7 @@ public class ThievingScript extends Script {
             Rs2Bank.depositAllExcept(ItemID.SEED_BOX, ItemID.SEED_BOX_OPEN);
             Rs2Inventory.waitForInventoryChanges(3000);
             Rs2Inventory.interact("seed box", "empty", false);
+            sleepGaussian(600, 300);
         }
         else
         {
