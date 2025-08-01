@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -98,6 +99,8 @@ public class CardewSlayerScript extends Script {
     boolean chosenEastOrWest = false;
 
     boolean currentlyFlickPrayer = false;
+
+    Function<Rs2NpcModel, WorldPoint> locationFunc = Rs2NpcModel::getWorldLocation;
 
     public boolean run(CardewSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -414,11 +417,12 @@ public class CardewSlayerScript extends Script {
                                 // Try and get an npc that matches our task if multiple things are interacting with us
                                 .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation())
                                         && npc.getName() != null && npc.getName().toLowerCase().contains(slayerTarget.getMonsterData().getMonster()))
-                                .findFirst()
+                                .min(Comparator.comparingInt(npc -> npc.getWorldLocation().distanceTo(Rs2Player.getWorldLocation())))
                                 // If it can't find that, fallback to a regular return of the list that we can reach
                                 .orElse(npcsInteractingWithPlayer.stream()
                                         .filter(npc -> npc.getWorldLocation() != null && Rs2Walker.canReach(npc.getWorldLocation()))
-                                        .findFirst().orElse(null));
+                                        .min(Comparator.comparingInt(npc -> npc.getWorldLocation().distanceTo(Rs2Player.getWorldLocation())))
+                                        .orElse(null));
                         assert target != null;
 
                         Microbot.log("Target: " + target);
@@ -510,7 +514,7 @@ public class CardewSlayerScript extends Script {
                             Rs2NpcModel target = targetList.stream()
                                     .filter(npc -> npc.getComposition() != null && Arrays.stream(npc.getComposition()
                                             .getActions()).anyMatch(action -> action != null && action.toLowerCase().contains("attack")))
-                                    .findFirst()
+                                    .min(Comparator.comparingInt(npc -> npc.getWorldLocation().distanceTo(Rs2Player.getWorldLocation())))
                                     .orElse(null);
 
                             assert target != null;
@@ -1171,24 +1175,26 @@ public class CardewSlayerScript extends Script {
         if (Rs2Inventory.hasItem("bones", false))
         {
             Rs2ItemModel boneItem = Rs2Inventory.get("bones", false);
-            for (String action : boneItem.getInventoryActions())
-            {
-                if (action.equalsIgnoreCase("bury"))
-                {
+            //for (String action : boneItem.getInventoryActions())
+            //{
+                //if (action.equalsIgnoreCase("bury"))
+                //{
                     Rs2Inventory.interact(boneItem, "bury");
-                }
-            }
+                    Rs2Inventory.waitForInventoryChanges(3000);
+                //}
+            //}
         }
         if (Rs2Inventory.hasItem(" ashes", false))
         {
             Rs2ItemModel ashItem = Rs2Inventory.get(" ashes", false);
-            for (String action : ashItem.getInventoryActions())
-            {
-                if (action.equalsIgnoreCase("scatter"))
-                {
+            //for (String action : ashItem.getInventoryActions())
+            //{
+                //if (action.equalsIgnoreCase("scatter"))
+                //{
                     Rs2Inventory.interact(ashItem, "scatter");
-                }
-            }
+                    Rs2Inventory.waitForInventoryChanges(3000);
+                //}
+            //}
         }
     }
 
