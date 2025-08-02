@@ -360,6 +360,8 @@ public class CardewSlayerScript extends Script {
                     }
                     // Get task from master
                     Rs2Npc.interact(currentMaster.getName(), "Assignment");
+
+                    Rs2Dialogue.sleepUntilInDialogue();
                 }
                 break;
 
@@ -1132,7 +1134,7 @@ public class CardewSlayerScript extends Script {
 
         // Sleep a moment to try wait for a death animation before we path away from our slayer location
         // What if we get an item drop we want
-        Global.sleepGaussian(1000, 300);
+        Global.sleepGaussian(2000, 300);
     }
 
     public void CalculateKillsLeft()
