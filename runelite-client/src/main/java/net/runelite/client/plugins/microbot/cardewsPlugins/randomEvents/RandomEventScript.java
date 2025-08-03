@@ -11,6 +11,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
+import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
@@ -102,6 +103,7 @@ public class RandomEventScript extends Script {
 
     private boolean HandleXPLamp(RandomEventConfig _config)
     {
+        if (Rs2Combat.inCombat()) return false;
         // If there is a lamp in the players inventory, handle lamp with chosen skill
         // Then return. I don't want potential script in-fighting for control.
         if (Rs2Inventory.hasItem("Lamp"))
