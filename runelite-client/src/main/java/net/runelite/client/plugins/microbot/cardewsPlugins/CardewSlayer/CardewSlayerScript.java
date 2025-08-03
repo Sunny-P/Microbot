@@ -28,6 +28,7 @@ import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
+import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Food;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcManager;
@@ -38,6 +39,7 @@ import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import org.slf4j.event.Level;
 
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -52,6 +54,7 @@ public class CardewSlayerScript extends Script {
     public enum States{
         MOVING_TO_SLAYER_MASTER,
         GETTING_SLAYER_TASK,
+        RECEIVED_TASK_RESOLVE_STATE,
         MOVING_TO_MONSTER_LOCATION,
         SLAYING_MONSTER,
         MOVING_TO_NEAREST_BANK,
@@ -93,6 +96,7 @@ public class CardewSlayerScript extends Script {
     @Setter
     boolean tryForceWalkToMonsterLocation = false;
     int turaelSkipProgress = -1;
+    boolean isDeterminingState = false;
 
     float timeNotInCombat = 0;
     boolean falseWestTrueEast = false;
@@ -345,12 +349,17 @@ public class CardewSlayerScript extends Script {
                 //}
                 if (Rs2Slayer.hasSlayerTask())
                 {
+                    //if (Rs2Dialogue.hasContinue())
+                    //{
+                    //    Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                    //}
                     targetMonsterName = Rs2Slayer.getSlayerTask();
                     targetMonsterName = CUtil.SingularisePluralName(targetMonsterName);
                     killsLeft = Rs2Slayer.getSlayerTaskSize();
                     Microbot.log("Slayer target: " + targetMonsterName);
 
-                    DetermineStateFromSlayerTask(_config);
+                    currentState = States.RECEIVED_TASK_RESOLVE_STATE;
+                    break;
                 }
                 else
                 {
@@ -362,6 +371,14 @@ public class CardewSlayerScript extends Script {
                     Rs2Npc.interact(currentMaster.getName(), "Assignment");
 
                     Rs2Dialogue.sleepUntilInDialogue();
+                }
+                break;
+
+            case RECEIVED_TASK_RESOLVE_STATE:
+                if (!isDeterminingState)
+                {
+                    isDeterminingState = true;
+                    DetermineStateFromSlayerTask(_config);
                 }
                 break;
 
@@ -692,105 +709,109 @@ public class CardewSlayerScript extends Script {
                         }
 
                         // Check if our task has any requirements in the first place
-                        List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
-                        if (!requiredItemsList.get(0).equalsIgnoreCase("none") && !hasRequiredItem)
+                        if (slayerTarget.getMonsterData() != null)
                         {
-                            boolean requireSlayerHelm = true;
-
-                            for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
+                            List<String> requiredItemsList = Arrays.stream(slayerTarget.getMonsterData().getItemsRequired()).collect(Collectors.toList());
+                            if (!requiredItemsList.get(0).equalsIgnoreCase("none") && !hasRequiredItem)
                             {
-                                Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
-                                if (Rs2Bank.hasItem(requiredItem))
+                                boolean requireSlayerHelm = true;
+
+                                for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
                                 {
-                                    // If our required item is a Slayer helm component
-                                    // Only withdraw these if we don't have a slayer helm
-                                    if ((requiredItem.toLowerCase().contains("earmuffs") || requiredItem.toLowerCase().contains("facemask")
-                                            || requiredItem.toLowerCase().contains("nose peg") || requiredItem.toLowerCase().contains("spiny helmet"))
-                                            && !Rs2Bank.hasItem(ItemID.SLAYER_HELM))
+                                    Microbot.log("Required item: " + requiredItem + ". Attempting to retrieve.");
+                                    if (Rs2Bank.hasItem(requiredItem))
                                     {
-                                        requireSlayerHelm = false;
-
-                                        // If for some reason we are already wearing the required item
-                                        // Withdraw our item and continue to the next loop iteration
-                                        IsNotWearingItemThenWithdraw(requiredItem);
-                                        continue;
-                                    }
-                                    else if (requiredItem.toLowerCase().contains("ice cooler"))
-                                    {
-                                        Rs2Bank.withdrawX(requiredItem, killsLeft, false);
-                                        Rs2Inventory.waitForInventoryChanges(5000);
-                                        Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
-                                        Rs2Inventory.waitForInventoryChanges(5000);
-                                        Rs2Bank.withdrawX(ItemID.WATER_SKIN4, 2);
-                                        Rs2Inventory.waitForInventoryChanges(5000);
-
-                                        hasRequiredItem = true;
-                                        continue;
-                                    }
-                                    else if (requiredItem.toLowerCase().contains("bag of salt"))
-                                    {
-                                        Rs2Bank.withdrawX(requiredItem, killsLeft, false);
-                                        Rs2Inventory.waitForInventoryChanges(5000);
-
-                                        hasRequiredItem = true;
-                                        continue;
-                                    }
-                                    // Withdrawn regular non-case required item
-                                    // If we are already wearing the required item no need to withdraw
-                                    IsNotWearingItemThenWithdraw(requiredItem);
-                                }
-                                // LOOK FOR A BULLSEYE HERE, BECAUSE requiredItem STRING WILL NEVER MATCH THE ACTUAL NAME ANYMORE
-                                else if (requiredItem.toLowerCase().contains("bullseye lantern"))
-                                {
-                                    if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
-                                    {
-                                        Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
-                                        hasRequiredItem = true;
-                                    }
-                                    else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
-                                    {
-                                        lightingLightSource = true;
-                                        if (Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                        // If our required item is a Slayer helm component
+                                        // Only withdraw these if we don't have a slayer helm
+                                        if ((requiredItem.toLowerCase().contains("earmuffs") || requiredItem.toLowerCase().contains("facemask")
+                                                || requiredItem.toLowerCase().contains("nose peg") || requiredItem.toLowerCase().contains("spiny helmet"))
+                                                && !Rs2Bank.hasItem(ItemID.SLAYER_HELM))
                                         {
-                                            Rs2Bank.withdrawOne(ItemID.TINDERBOX);
+                                            requireSlayerHelm = false;
 
-                                            Rs2Bank.closeBank();
-                                            Global.sleepUntil(() -> !Rs2Bank.isOpen());
-
-                                            Rs2Inventory.use(ItemID.TINDERBOX);
-                                            Rs2Inventory.use(ItemID.BULLSEYE_LANTERN_UNLIT);
-
-                                            Rs2Bank.openBank();
-                                            Global.sleepUntil(Rs2Bank::isOpen);
-
-                                            Rs2Bank.depositItems(ItemID.TINDERBOX);
-                                            lightingLightSource = false;
+                                            // If for some reason we are already wearing the required item
+                                            // Withdraw our item and continue to the next loop iteration
+                                            IsNotWearingItemThenWithdraw(requiredItem);
+                                            continue;
+                                        }
+                                        else if (requiredItem.toLowerCase().contains("ice cooler"))
+                                        {
+                                            Rs2Bank.withdrawX(requiredItem, killsLeft, false);
+                                            Rs2Inventory.waitForInventoryChanges(5000);
+                                            Rs2Bank.withdrawOne(ItemID.SHANTAY_PASS);
+                                            Rs2Inventory.waitForInventoryChanges(5000);
+                                            Rs2Bank.withdrawX(ItemID.WATER_SKIN4, 2);
+                                            Rs2Inventory.waitForInventoryChanges(5000);
 
                                             hasRequiredItem = true;
+                                            continue;
+                                        }
+                                        else if (requiredItem.toLowerCase().contains("bag of salt"))
+                                        {
+                                            Rs2Bank.withdrawX(requiredItem, killsLeft, false);
+                                            Rs2Inventory.waitForInventoryChanges(5000);
+
+                                            hasRequiredItem = true;
+                                            continue;
+                                        }
+                                        // Withdrawn regular non-case required item
+                                        // If we are already wearing the required item no need to withdraw
+                                        IsNotWearingItemThenWithdraw(requiredItem);
+                                    }
+                                    // LOOK FOR A BULLSEYE HERE, BECAUSE requiredItem STRING WILL NEVER MATCH THE ACTUAL NAME ANYMORE
+                                    else if (requiredItem.toLowerCase().contains("bullseye lantern"))
+                                    {
+                                        if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_LIT))
+                                        {
+                                            Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_LIT);
+                                            hasRequiredItem = true;
+                                        }
+                                        else if (Rs2Bank.hasItem(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                        {
+                                            lightingLightSource = true;
+                                            if (Rs2Bank.withdrawOne(ItemID.BULLSEYE_LANTERN_UNLIT))
+                                            {
+                                                Rs2Bank.withdrawOne(ItemID.TINDERBOX);
+
+                                                Rs2Bank.closeBank();
+                                                Global.sleepUntil(() -> !Rs2Bank.isOpen());
+
+                                                Rs2Inventory.use(ItemID.TINDERBOX);
+                                                Rs2Inventory.use(ItemID.BULLSEYE_LANTERN_UNLIT);
+
+                                                Rs2Bank.openBank();
+                                                Global.sleepUntil(Rs2Bank::isOpen);
+
+                                                Rs2Bank.depositItems(ItemID.TINDERBOX);
+                                                lightingLightSource = false;
+
+                                                hasRequiredItem = true;
+                                            }
                                         }
                                     }
-                                }
-                                else    // WE DO NOT HAVE THE REQUIRED ITEM IN THE BANK
-                                {
-                                    // If required item is a slayer helmet
-                                    if (requiredItem.toLowerCase().contains("slayer helm"))
+                                    else    // WE DO NOT HAVE THE REQUIRED ITEM IN THE BANK
                                     {
-                                        // If we still need it, shutdown.
-                                        // This is changed to false if we have withdrawn something like a facemask/nose peg/etc instead of a helm.
-                                        if (requireSlayerHelm)
+                                        // If required item is a slayer helmet
+                                        if (requiredItem.toLowerCase().contains("slayer helm"))
                                         {
-                                            Microbot.log("Missing required item: " + requiredItem);
+                                            // If we still need it, shutdown.
+                                            // This is changed to false if we have withdrawn something like a facemask/nose peg/etc instead of a helm.
+                                            if (requireSlayerHelm)
+                                            {
+                                                Microbot.log("Missing required item: " + requiredItem);
+                                                this.shutdown();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Microbot.log("Item not found!: " + requiredItem);
                                             this.shutdown();
                                         }
-                                    }
-                                    else
-                                    {
-                                        Microbot.log("Item not found!: " + requiredItem);
-                                        this.shutdown();
                                     }
                                 }
                             }
                         }
+
                         // Regardless of a required item
                         if (slayerTarget == CUtil.SlayerTarget.KALPHITE && !hasRequiredItem)
                         {
@@ -1072,6 +1093,7 @@ public class CardewSlayerScript extends Script {
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
             if (potentialTarget.getMonsterData() != null) {
                 //Microbot.log("Potential Target: " + potentialTarget.getMonsterData().getMonster());
+                String monsterNameCopy = potentialTarget.getMonsterData().getMonster();
                 if (targetMonsterName.equalsIgnoreCase(potentialTarget.getMonsterData().getMonster())) {
                     switch (potentialTarget) {
                         case NONE:
@@ -1110,6 +1132,15 @@ public class CardewSlayerScript extends Script {
                     slayerTarget = potentialTarget;
 
                     currentState = States.MOVING_TO_NEAREST_BANK;
+                    isDeterminingState = false;
+                    break;
+                }
+                else if (targetMonsterName.equalsIgnoreCase("fleshcrawler"))    // No space in the detected name, unlike every other task so far
+                {
+                    slayerTarget = CUtil.SlayerTarget.FLESH_CRAWLER;
+
+                    currentState = States.MOVING_TO_NEAREST_BANK;
+                    isDeterminingState = false;
                     break;
                 }
             }
@@ -1118,6 +1149,7 @@ public class CardewSlayerScript extends Script {
         if (slayerTarget == CUtil.SlayerTarget.NONE && killsLeft <= 0)
         {
             currentState = States.MOVING_TO_SLAYER_MASTER;
+            isDeterminingState = false;
         }
     }
 
