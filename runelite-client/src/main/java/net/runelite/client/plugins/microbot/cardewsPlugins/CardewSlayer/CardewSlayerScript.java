@@ -1182,7 +1182,7 @@ public class CardewSlayerScript extends Script {
         }
     }
 
-    public void SlayerTaskCompleted()
+    public void SlayerTaskCompleted(CardewSlayerConfig _config)
     {
         currentState = States.MOVING_TO_SLAYER_MASTER;
         killsLeft = 0;
@@ -1193,9 +1193,8 @@ public class CardewSlayerScript extends Script {
         tryForceWalkToMonsterLocation = false;
         targetList.clear();
 
-        // Sleep a moment to try wait for a death animation before we path away from our slayer location
-        // What if we get an item drop we want
-        Global.sleepGaussian(2000, 300);
+        // Try handle looting one last time before teleporting away hopefully to loot our final kill.
+        HandleLooting(_config);
     }
 
     public void CalculateKillsLeft()

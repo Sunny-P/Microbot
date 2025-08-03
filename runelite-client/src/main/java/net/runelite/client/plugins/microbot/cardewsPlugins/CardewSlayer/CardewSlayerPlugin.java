@@ -19,7 +19,7 @@ import java.awt.*;
 import java.util.Objects;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Cardew + "Slayer",
+        name = PluginDescriptor.Cardew + "Auto Slayer",
         description = "Cardews Slayer Plugin",
         tags = {"cd", "microbot", "slayer", "cardew"},
         enabledByDefault = false
@@ -105,7 +105,7 @@ public class CardewSlayerPlugin extends Plugin {
         }
         else if (chatMsg.contains("You have completed your task!"))
         {
-            cardewSlayerScript.SlayerTaskCompleted();
+            cardewSlayerScript.SlayerTaskCompleted(config);
         }
         else if (chatMsg.contains("helmet repels the wall beast") && (cardewSlayerScript.GetCurrentState() == CardewSlayerScript.States.SLAYING_MONSTER))
         {
