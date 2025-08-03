@@ -62,6 +62,12 @@ public class CUtil {
         return word;
     }
 
+    public static boolean DoNamesMatch(String nameA, String nameB) {
+        String normalisedNameA = nameA.replaceAll("\\s+", "").toLowerCase();
+        String normalisedNameB = nameB.replaceAll("\\s+", "").toLowerCase();
+        return normalisedNameA.equals(normalisedNameB);
+    }
+
     /**
      * Sets most variable settings for Rs2Antiban system.
      * <br><br>

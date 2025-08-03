@@ -61,7 +61,7 @@ public class CardewSlayerScript extends Script {
         BANKING
     }
     @Getter
-    static States currentState = States.MOVING_TO_NEAREST_BANK;
+    static States currentState = States.RECEIVED_TASK_RESOLVE_STATE;
 
     @Getter
     enum Seedbox{
@@ -97,6 +97,7 @@ public class CardewSlayerScript extends Script {
     boolean tryForceWalkToMonsterLocation = false;
     int turaelSkipProgress = -1;
     boolean isDeterminingState = false;
+    boolean justLooted = false;
 
     float timeNotInCombat = 0;
     boolean falseWestTrueEast = false;
@@ -120,6 +121,8 @@ public class CardewSlayerScript extends Script {
         falseWestTrueEast = false;
         chosenEastOrWest = false;
         currentlyFlickPrayer = false;
+        isDeterminingState = false;
+        justLooted = false;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -176,7 +179,15 @@ public class CardewSlayerScript extends Script {
                 }
                 if (config.PickupAndBuryBones())
                 {
-                    BuryBones();
+                    if (!justLooted)
+                    {
+                        BuryBones();
+                    }
+                    else
+                    {
+                        justLooted = false;
+                    }
+
                 }
 
                 if (tryForceWalkToMonsterLocation)
@@ -261,9 +272,12 @@ public class CardewSlayerScript extends Script {
                         Rs2Inventory.interact("Enchanted gem", "Check");
                         // The state will automatically change to MOVING_TO_SLAYER_MONSTER if the game message from the gem is parsed to update our task
                         slayerGemChecked = true;
+                        sleepGaussian(1500, 600);
                         break;
                     }
                 }
+
+                if (isDeterminingState) break;
 
                 CheckForAndOpenSeedbox();
 
@@ -375,6 +389,17 @@ public class CardewSlayerScript extends Script {
                 break;
 
             case RECEIVED_TASK_RESOLVE_STATE:
+                if (!slayerGemChecked)
+                {
+                    if (Rs2Inventory.hasItem("Enchanted gem"))
+                    {
+                        Rs2Inventory.interact("Enchanted gem", "Check");
+                        // The state will automatically change to MOVING_TO_SLAYER_MONSTER if the game message from the gem is parsed to update our task
+                        slayerGemChecked = true;
+                        sleepGaussian(1500, 600);
+                        break;
+                    }
+                }
                 if (!isDeterminingState)
                 {
                     isDeterminingState = true;
@@ -1078,6 +1103,7 @@ public class CardewSlayerScript extends Script {
 
             Microbot.log("Assigned: " + killsLeft + " " + targetMonsterName + "!");
 
+            isDeterminingState = true;
             DetermineStateFromSlayerTask(_config);
         }
         else {
@@ -1093,8 +1119,9 @@ public class CardewSlayerScript extends Script {
         for (CUtil.SlayerTarget potentialTarget : CUtil.SlayerTarget.values()){
             if (potentialTarget.getMonsterData() != null) {
                 //Microbot.log("Potential Target: " + potentialTarget.getMonsterData().getMonster());
-                String monsterNameCopy = potentialTarget.getMonsterData().getMonster();
-                if (targetMonsterName.equalsIgnoreCase(potentialTarget.getMonsterData().getMonster())) {
+
+                //if (targetMonsterName.equalsIgnoreCase(potentialTarget.getMonsterData().getMonster())) {
+                if (CUtil.DoNamesMatch(potentialTarget.getMonsterData().getMonster(), targetMonsterName)) {
                     switch (potentialTarget) {
                         case NONE:
                             continue;
@@ -1130,25 +1157,27 @@ public class CardewSlayerScript extends Script {
                     Microbot.log("Confirmed assigned target: " + potentialTarget.getMonsterData().getMonster());
 
                     slayerTarget = potentialTarget;
-
-                    currentState = States.MOVING_TO_NEAREST_BANK;
-                    isDeterminingState = false;
                     break;
                 }
-                else if (targetMonsterName.equalsIgnoreCase("fleshcrawler"))    // No space in the detected name, unlike every other task so far
-                {
-                    slayerTarget = CUtil.SlayerTarget.FLESH_CRAWLER;
-
-                    currentState = States.MOVING_TO_NEAREST_BANK;
-                    isDeterminingState = false;
-                    break;
-                }
+                //else if (targetMonsterName.equalsIgnoreCase("fleshcrawler"))    // No space in the detected name, unlike every other task so far
+                //{
+                //    slayerTarget = CUtil.SlayerTarget.FLESH_CRAWLER;
+//
+                //    currentState = States.MOVING_TO_NEAREST_BANK;
+                //    isDeterminingState = false;
+                //    break;
+                //}
             }
         }
 
         if (slayerTarget == CUtil.SlayerTarget.NONE && killsLeft <= 0)
         {
             currentState = States.MOVING_TO_SLAYER_MASTER;
+            isDeterminingState = false;
+        }
+        else
+        {
+            currentState = States.MOVING_TO_NEAREST_BANK;
             isDeterminingState = false;
         }
     }
@@ -1245,7 +1274,10 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     "untradeable"
             );
-            Rs2GroundItem.lootUntradables(untradeableItemParams);
+            if (Rs2GroundItem.lootUntradables(untradeableItemParams))
+            {
+                justLooted = true;
+            }
         }
 
         LootingParameters valueBasedItemParams = new LootingParameters(
@@ -1257,7 +1289,10 @@ public class CardewSlayerScript extends Script {
                 false,
                 _config.OnlyLootMyDrops()
         );
-        Rs2GroundItem.lootItemBasedOnValue(valueBasedItemParams);
+        if (Rs2GroundItem.lootItemBasedOnValue(valueBasedItemParams))
+        {
+            justLooted = true;
+        }
 
         if (_config.PickupRunes())
         {
@@ -1270,7 +1305,10 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     " rune"
             );
-            Rs2GroundItem.lootItemsBasedOnNames(runesItemParams);
+            if (Rs2GroundItem.lootItemsBasedOnNames(runesItemParams))
+            {
+                justLooted = true;
+            }
         }
         if (_config.PickupSeeds())
         {
@@ -1283,7 +1321,10 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     " seed"
             );
-            Rs2GroundItem.lootItemsBasedOnNames(seedItemParams);
+            if (Rs2GroundItem.lootItemsBasedOnNames(seedItemParams))
+            {
+                justLooted = true;
+            }
         }
         if (_config.PickupGrimyHerbs())
         {
@@ -1296,7 +1337,10 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     "Grimy "
             );
-            Rs2GroundItem.lootItemsBasedOnNames(herbItemParams);
+            if (Rs2GroundItem.lootItemsBasedOnNames(herbItemParams))
+            {
+                justLooted = true;
+            }
         }
 
         if (_config.PickupAndBuryBones())
@@ -1310,7 +1354,10 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     "bones"
             );
-            Rs2GroundItem.lootItemsBasedOnNames(boneItemParams);
+            if (Rs2GroundItem.lootItemsBasedOnNames(boneItemParams))
+            {
+                justLooted = true;
+            }
 
             LootingParameters ashItemParams = new LootingParameters(
                     10,
@@ -1321,8 +1368,12 @@ public class CardewSlayerScript extends Script {
                     _config.OnlyLootMyDrops(),
                     " ashes"
             );
+            ashItemParams.setIgnoredNames("Ashes");
             // Hopefully this only loots ashes of a type. Not regular ashes.
-            Rs2GroundItem.lootItemsBasedOnNames(ashItemParams);
+            if (Rs2GroundItem.lootItemsBasedOnNames(ashItemParams))
+            {
+                justLooted = true;
+            }
         }
     }
 }

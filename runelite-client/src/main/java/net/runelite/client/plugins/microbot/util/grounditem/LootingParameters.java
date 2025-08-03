@@ -112,4 +112,6 @@ public class LootingParameters {
         return names;
     }
 
+    public void setIgnoredNames(String... _ignoredNames) { ignoredNames = _ignoredNames; }
+
 }
