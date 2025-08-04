@@ -15,9 +15,10 @@ import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
         "It will use your currently equipped gear to kill creatures with.<br>" +
         "Ignores inventory // Start with an empty inventory except your teleport runes/tab<br>" +
         "<br>" +
-        "This is not a particularly dangerous activity, safety not handled if you are low level.<br>" +
+        "<b>! WARNING !</b><br>" +
+        "This is not a particularly dangerous activity, I have not handled safety if you are low level.<br>" +
         "<br>" +
-        "Start at the bank." +
+        "--> Start at the bank <--" +
         "</center>")
 public interface TowerOfLifeCCConfig extends Config {
     @ConfigItem(
