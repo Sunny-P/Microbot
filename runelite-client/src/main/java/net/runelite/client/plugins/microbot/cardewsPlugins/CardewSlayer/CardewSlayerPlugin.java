@@ -11,6 +11,10 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.microbot.Microbot;
+import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
+import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
@@ -62,30 +66,57 @@ public class CardewSlayerPlugin extends Plugin {
         //System.out.println(getName().chars().mapToObj(i -> (char)(i + 3)).map(String::valueOf).collect(Collectors.joining()));
 
         if (cardewSlayerScript.ShouldPrayerFlick()) {
+            // THIS FIGHTS THE SCRIPT FOR TAB CONTROL
+            // INSTEAD IMPLEMENT QUICK PRAYER SETTING DEPENDING ON TASK
+            // AND FLICK USING QUICK PRAYERS INSTEAD
+            //if (Rs2Tab.getCurrentTab() != InterfaceTab.PRAYER)
+            //{
+            //    Rs2Tab.switchTo(InterfaceTab.PRAYER);
+            //}
             // Toggle flick state on each tick
             prayerFlickState = !prayerFlickState;
 
             // Sync actual game prayer state
-            //boolean prayerEnabled = Rs2Prayer.isEnabled(protectPrayer);
+            boolean prayerEnabled = IsAProtectionPrayerActive();
 //
-            //if (prayerFlickState && !prayerEnabled) {
-            //    Rs2Prayer.toggle(protectPrayer, true);
-            //    lastFlickState = true;
-            //} else if (!prayerFlickState && lastFlickState) {
-            //    Rs2Prayer.toggle(protectPrayer, false);
-            //    lastFlickState = false;
-            //}
-        } else {
+            if (!prayerEnabled)
+            {
+                Rs2Prayer.toggle(cardewSlayerScript.protectionPrayer, true);
+            }
+            else
+            {
+                Rs2Prayer.toggle(cardewSlayerScript.protectionPrayer, false);
+                //lastFlickState = false;
+                CardewSlayerScript.sleepGaussian(100, 50);
+                Rs2Prayer.toggle(cardewSlayerScript.protectionPrayer, true);
+            }
+        }
+        else
+        {
             // Make sure prayer is OFF when not flicking
-            //if (Rs2Prayer.isEnabled(protectPrayer)) {
-            //    Rs2Prayer.toggle(protectPrayer, false);
-            //}
+            if (IsAProtectionPrayerActive())
+            {
+                Rs2Prayer.toggle(cardewSlayerScript.protectionPrayer, false);
+            }
 
             // Reset internal state
             prayerFlickState = false;
             lastFlickState = false;
         }
 
+    }
+
+    boolean IsAProtectionPrayerActive()
+    {
+        if (Rs2Prayer.getActiveProtectionPrayer() == null) return false;
+        switch (Rs2Prayer.getActiveProtectionPrayer())
+        {
+            case PROTECT_MELEE:
+            case PROTECT_MAGIC:
+            case PROTECT_RANGE:
+                return true;
+        }
+        return false;
     }
 
     @Subscribe

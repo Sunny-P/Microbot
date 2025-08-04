@@ -34,6 +34,8 @@ import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcManager;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
+import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
 import net.runelite.client.plugins.microbot.util.slayer.Rs2Slayer;
 import net.runelite.client.plugins.microbot.util.slayer.enums.SlayerMaster;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
@@ -104,6 +106,7 @@ public class CardewSlayerScript extends Script {
     boolean chosenEastOrWest = false;
 
     boolean currentlyFlickPrayer = false;
+    Rs2PrayerEnum protectionPrayer = Rs2PrayerEnum.PROTECT_MELEE;
 
     Function<Rs2NpcModel, WorldPoint> locationFunc = Rs2NpcModel::getWorldLocation;
 
@@ -147,25 +150,21 @@ public class CardewSlayerScript extends Script {
                 // Perhaps provide a statement forcing the player to use an emergency teleport
                 // When they drop below a health threshold?
                 // Bot Ring of Life lol; but higher threshold.
-
-                // Handle eating food outside the state machine
-                if (!Rs2Player.eatAt(config.EatFoodPercent()))
-                {
-                    // If FALSE then we didn't eat
-                    // Did we not eat because we don't have anymore food?
-                    // If so, we need to save ourselves
-                    if (Rs2Inventory.getInventoryFood().isEmpty())
-                    {
-                        // Handle emergency teleport/transitioning to banking state
-                        if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION)
-                        {
-                            double playerHealthPercent = (double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS);
-                            Microbot.log("Health percent: " + playerHealthPercent);
-                            // If our health drops below a danger threshold?
-                            if (playerHealthPercent < 0.5)
-                            {
-                                // If we are below half health
-                                currentState = States.MOVING_TO_NEAREST_BANK;
+                double playerHealthPercent = (double) Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS) / Rs2Player.getRealSkillLevel(Skill.HITPOINTS);
+                if (playerHealthPercent < config.EatFoodPercent()) {
+                    if (!Rs2Player.eatAt(config.EatFoodPercent())) {
+                        // If FALSE then we didn't eat
+                        // Did we not eat because we don't have anymore food?
+                        // If so, we need to save ourselves
+                        if (Rs2Inventory.getInventoryFood().isEmpty()) {
+                            // Handle emergency teleport/transitioning to banking state
+                            if (currentState == States.SLAYING_MONSTER || currentState == States.MOVING_TO_MONSTER_LOCATION) {
+                                Microbot.log("Health percent: " + playerHealthPercent);
+                                // If our health drops below a danger threshold?
+                                if (playerHealthPercent < 0.5) {
+                                    // If we are below half health
+                                    currentState = States.MOVING_TO_NEAREST_BANK;
+                                }
                             }
                         }
                     }
@@ -211,6 +210,7 @@ public class CardewSlayerScript extends Script {
                     if (!Rs2Player.isInCombat())
                     {
                         timeNotInCombat += deltaTime; // Track timeNotInCombat as seconds.
+                        Microbot.log("Time Not In Combat: " + timeNotInCombat);
 
                         if (timeNotInCombat > 60)   // OUT OF COMBAT FOR 1 MINUTE
                         {
@@ -597,6 +597,16 @@ public class CardewSlayerScript extends Script {
                                 String enemyAttackStyle = Rs2NpcManager.attackStyleMap.get(inCombatNpc.getId());
                                 // Assuming for MELEE: returned values will be: "Crush" "Stab" "Slash"
                                 Microbot.log("InCombatNpc: " + inCombatNpc.getName() + " " + enemyAttackStyle);
+                                String[] meleeStyles = new String[]{"crush","stab","slash","Melee, Magical ranged"};
+                                for (String style : meleeStyles)
+                                {
+                                    if (style.toLowerCase().contains(enemyAttackStyle.toLowerCase()))
+                                    {
+                                        protectionPrayer = Rs2PrayerEnum.PROTECT_MELEE;
+                                        break;
+                                    }
+                                }
+
                                 currentlyFlickPrayer = true;
                             }
                             else
@@ -740,6 +750,7 @@ public class CardewSlayerScript extends Script {
                             if (!requiredItemsList.get(0).equalsIgnoreCase("none") && !hasRequiredItem)
                             {
                                 boolean requireSlayerHelm = true;
+                                boolean requireVsShield = true;
 
                                 for (String requiredItem : slayerTarget.getMonsterData().getItemsRequired())
                                 {
@@ -756,7 +767,14 @@ public class CardewSlayerScript extends Script {
 
                                             // If for some reason we are already wearing the required item
                                             // Withdraw our item and continue to the next loop iteration
-                                            IsNotWearingItemThenWithdraw(requiredItem);
+                                            IsNotWearingItemThenWithdraw(requiredItem, _config);
+                                            continue;
+                                        }
+                                        else if (CUtil.DoNamesMatch(requiredItem, "Mirror Shield"))
+                                        {
+                                            requireVsShield = false;
+
+                                            IsNotWearingItemThenWithdraw(requiredItem, _config);
                                             continue;
                                         }
                                         else if (requiredItem.toLowerCase().contains("ice cooler"))
@@ -781,7 +799,7 @@ public class CardewSlayerScript extends Script {
                                         }
                                         // Withdrawn regular non-case required item
                                         // If we are already wearing the required item no need to withdraw
-                                        IsNotWearingItemThenWithdraw(requiredItem);
+                                        IsNotWearingItemThenWithdraw(requiredItem, _config);
                                     }
                                     // LOOK FOR A BULLSEYE HERE, BECAUSE requiredItem STRING WILL NEVER MATCH THE ACTUAL NAME ANYMORE
                                     else if (requiredItem.toLowerCase().contains("bullseye lantern"))
@@ -822,6 +840,14 @@ public class CardewSlayerScript extends Script {
                                             // If we still need it, shutdown.
                                             // This is changed to false if we have withdrawn something like a facemask/nose peg/etc instead of a helm.
                                             if (requireSlayerHelm)
+                                            {
+                                                Microbot.log("Missing required item: " + requiredItem);
+                                                this.shutdown();
+                                            }
+                                        }
+                                        else if (CUtil.DoNamesMatch(requiredItem, "V's shield"))
+                                        {
+                                            if (requireVsShield)
                                             {
                                                 Microbot.log("Missing required item: " + requiredItem);
                                                 this.shutdown();
@@ -1072,7 +1098,7 @@ public class CardewSlayerScript extends Script {
      *
      * @param _requiredItem Required Item
      */
-    void IsNotWearingItemThenWithdraw(String _requiredItem)
+    void IsNotWearingItemThenWithdraw(String _requiredItem, CardewSlayerConfig _config)
     {
         if (!Rs2Equipment.isWearing(_requiredItem, false))
         {
@@ -1081,8 +1107,8 @@ public class CardewSlayerScript extends Script {
                 if (Rs2Bank.withdrawAndEquip(_requiredItem))
                 {
                     // We did equip the item
-                    // Flag lootBanked as false so we will bank any items we end up swapping out for required item
-                    lootBanked = false;
+                    Rs2InventorySetup setup = new Rs2InventorySetup(_config.InventorySetup(), mainScheduledFuture);
+                    setup.loadInventory();
                 }
                 hasRequiredItem = true;
             }
@@ -1365,9 +1391,9 @@ public class CardewSlayerScript extends Script {
                     1,
                     false,
                     _config.OnlyLootMyDrops(),
-                    " ashes"
+                    new String[]{"ashes"},
+                    " ashe"
             );
-            ashItemParams.setIgnoredNames("Ashes");
             // Hopefully this only loots ashes of a type. Not regular ashes.
             if (Rs2GroundItem.lootItemsBasedOnNames(ashItemParams))
             {

@@ -39,6 +39,11 @@ public class LootingParameters {
         setValues(0, 0, range, minItems, minQuantity, minInvSlots, delayedLooting, antiLureProtection, null, names);
     }
 
+    public LootingParameters(int range, int minItems, int minQuantity, int minInvSlots, boolean delayedLooting, boolean antiLureProtection, String[] ignoredNames, String... names
+    ) {
+        setValues(0, 0, range, minItems, minQuantity, minInvSlots, delayedLooting, antiLureProtection, ignoredNames, names);
+    }
+
     /**
      * This constructor is used to create a new LootingParameters object.
      * It sets the range, minimum items, minimum quantity, delayed looting, anti-lure protection, and names of the items to be looted.
@@ -111,7 +116,4 @@ public class LootingParameters {
     public String[] getNames() {
         return names;
     }
-
-    public void setIgnoredNames(String... _ignoredNames) { ignoredNames = _ignoredNames; }
-
 }

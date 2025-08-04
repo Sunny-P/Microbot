@@ -79,6 +79,7 @@ public class CUtil {
 
         Rs2AntibanSettings.antibanEnabled = true;
         Rs2AntibanSettings.usePlayStyle = true;
+        Rs2AntibanSettings.profileSwitching = true;
         Rs2AntibanSettings.randomIntervals = false;
         Rs2AntibanSettings.simulateFatigue = true;
         Rs2AntibanSettings.simulateAttentionSpan = true;

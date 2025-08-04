@@ -317,10 +317,20 @@ public class Rs2GroundItem {
     }
 
     public static boolean lootItemsBasedOnNames(LootingParameters params) {
-        final Predicate<GroundItem> filter = groundItem ->
-                groundItem.getLocation().distanceTo(Microbot.getClient().getLocalPlayer().getWorldLocation()) < params.getRange() &&
-                        (!params.isAntiLureProtection() || (params.isAntiLureProtection() && groundItem.getOwnership() == OWNERSHIP_SELF)) &&
-                        Arrays.stream(params.getNames()).anyMatch(name -> groundItem.getName().trim().toLowerCase().contains(name.trim().toLowerCase()));
+        final Predicate<GroundItem> filter = groundItem -> {
+            String itemName = groundItem.getName().trim().toLowerCase();
+            boolean nameMatches = Arrays.stream(params.getNames())
+                    .anyMatch(name -> itemName.contains(name.trim().toLowerCase()));
+
+            boolean isIgnored = params.getIgnoredNames() != null &&
+                    Arrays.stream(params.getIgnoredNames())
+                            .anyMatch(ignored -> itemName.equals(ignored.trim().toLowerCase()));
+
+            return groundItem.getLocation().distanceTo(Microbot.getClient().getLocalPlayer().getWorldLocation()) < params.getRange()
+                    && (!params.isAntiLureProtection() || groundItem.getOwnership() == OWNERSHIP_SELF)
+                    && nameMatches
+                    && !isIgnored;
+        };
         List<GroundItem> groundItems = getGroundItems().values().stream()
                 .filter(filter)
                 .collect(Collectors.toList());
