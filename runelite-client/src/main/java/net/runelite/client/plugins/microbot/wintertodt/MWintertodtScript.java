@@ -177,6 +177,7 @@ public class MWintertodtScript extends Script {
                     if (!isWintertodtAlive) {
                         if (state != State.ENTER_ROOM && state != State.WAITING && state != State.BANKING) {
                             setLockState(State.GLOBAL, false);
+                            BreakHandlerScript.setLockState(false);
                             changeState(State.WAITING);
                             if (Rs2Antiban.takeMicroBreakByChance())
                             {
@@ -185,6 +186,9 @@ public class MWintertodtScript extends Script {
                             }
                         }
                     } else {
+                        // If we somehow end up in an unlocked state when wintertodt is alive, set lockState
+                        // Probably happens when a microbreak gets triggered. Unsyncs something.
+                        if (!BreakHandlerScript.isLockState()) { BreakHandlerScript.setLockState(true); }
                         handleMainLoop();
                     }
                 } else {
