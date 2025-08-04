@@ -3,7 +3,9 @@ package net.runelite.client.plugins.microbot.cardewsPlugins;
 import lombok.Getter;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
@@ -282,6 +284,19 @@ public class CUtil {
         {
             this.monsterName = _monsterName;
             this.location = _location;
+        }
+    }
+
+    @Getter
+    public enum ToLCreature {
+        UNICOW(new WorldPoint(3019, 4408, 0)),
+        SPIDINE(new WorldPoint(3045, 4362, 0));
+
+        private final WorldPoint altarLocation;
+
+        ToLCreature(WorldPoint _altarLocation)
+        {
+            this.altarLocation = _altarLocation;
         }
     }
 }

@@ -116,7 +116,7 @@ public class MWintertodtScript extends Script {
                     MWintertodtScript.plugin = plugin;
                     Rs2Antiban.resetAntibanSettings();
                     Rs2Antiban.antibanSetupTemplates.applyGeneralBasicSetup();
-                    Rs2AntibanSettings.actionCooldownChance = 0.1;
+                    Rs2AntibanSettings.actionCooldownChance = 0.05;
                     Rs2Antiban.setActivity(Activity.GENERAL_WOODCUTTING);
                     Rs2Antiban.setPlayStyle(PlayStyle.EXTREME_AGGRESSIVE);
                     state = State.BANKING;
@@ -177,17 +177,19 @@ public class MWintertodtScript extends Script {
                     if (!isWintertodtAlive) {
                         if (state != State.ENTER_ROOM && state != State.WAITING && state != State.BANKING) {
                             setLockState(State.GLOBAL, false);
-                            BreakHandlerScript.setLockState(false);
                             changeState(State.WAITING);
+                            BreakHandlerScript.setLockState(false);
                             if (Rs2Antiban.takeMicroBreakByChance())
                             {
+                                // We have taken a Microbreak
+                                // Walk to the entrance area so we don't die to Wintertodt when it spawns
                                 Rs2Walker.walkTo(new WorldPoint(1631, 3980, 0));
                                 return;
                             }
                         }
                     } else {
                         // If we somehow end up in an unlocked state when wintertodt is alive, set lockState
-                        // Probably happens when a microbreak gets triggered. Unsyncs something.
+                        // Probably happens when a microbreak gets triggered. Unsyncs something?
                         if (!BreakHandlerScript.isLockState()) { BreakHandlerScript.setLockState(true); }
                         handleMainLoop();
                     }
