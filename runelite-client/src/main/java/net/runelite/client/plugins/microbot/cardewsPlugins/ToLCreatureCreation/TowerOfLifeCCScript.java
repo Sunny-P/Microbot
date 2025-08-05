@@ -155,7 +155,7 @@ public class TowerOfLifeCCScript extends Script {
                             }
                             else
                             {
-                                Rs2Bank.withdrawX(ItemID.COW_HIDE, 10);
+                                Rs2Bank.withdrawX(ItemID.COW_HIDE, 8);
                                 Rs2Inventory.waitForInventoryChanges(3000);
                             }
                             Rs2Bank.withdrawOne(ItemID.UNICORN_HORN);
@@ -181,7 +181,7 @@ public class TowerOfLifeCCScript extends Script {
                             }
                             else
                             {
-                                Rs2Bank.withdrawX(ItemID.RAW_SARDINE, 10);
+                                Rs2Bank.withdrawX(ItemID.RAW_SARDINE, 4);
                                 Rs2Inventory.waitForInventoryChanges(3000);
                             }
                             Rs2Bank.withdrawOne(ItemID.RED_SPIDERS_EGGS);
@@ -261,7 +261,7 @@ public class TowerOfLifeCCScript extends Script {
                         //Microbot.log("Ground items: " + (Rs2GroundItem.getGroundItems()));
                         //Microbot.log("Target list empty: " + targetList.isEmpty());
 
-                        if (targetList.isEmpty() && !looting)
+                        if (targetList.isEmpty())
                         {
                             // We need at least 1 cow hide to create a creature
                             if (Rs2Inventory.hasItem(ItemID.COW_HIDE))
@@ -275,14 +275,13 @@ public class TowerOfLifeCCScript extends Script {
                                 sleepUntil(() -> !targetList.isEmpty(), 5000);
                                 break;
                             }
-                            else
+                            else if (!looting)
                             {
                                 currentState = State.MOVING_TO_BANK;
-                                looting = false;
                                 break;
                             }
                         }
-                        else if (!targetList.isEmpty() && !Rs2Combat.inCombat())
+                        else if (!Rs2Combat.inCombat())
                         {
                             Rs2NpcModel target = targetList.stream().findAny().orElse(null);
                             assert target != null;
@@ -298,7 +297,7 @@ public class TowerOfLifeCCScript extends Script {
                     case SPIDINE:
                         looting = Rs2GroundItem.lootItemsBasedOnNames(spidineLootParams);
 
-                        if (targetList.isEmpty() && !looting)
+                        if (targetList.isEmpty())
                         {
                             // We need at least 1 raw sardine to create a creature
                             if (Rs2Inventory.hasItem(ItemID.RAW_SARDINE))
@@ -312,14 +311,13 @@ public class TowerOfLifeCCScript extends Script {
                                 sleepUntil(() -> !targetList.isEmpty(), 5000);
                                 break;
                             }
-                            else
+                            else if (!looting)
                             {
                                 currentState = State.MOVING_TO_BANK;
-                                looting = false;
                                 break;
                             }
                         }
-                        else if (!targetList.isEmpty() && !Rs2Combat.inCombat())
+                        else if (!Rs2Combat.inCombat())
                         {
                             Rs2NpcModel target = targetList.stream().findAny().orElse(null);
                             assert target != null;

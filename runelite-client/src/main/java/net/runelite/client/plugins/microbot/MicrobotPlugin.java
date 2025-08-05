@@ -284,6 +284,7 @@ public class MicrobotPlugin extends Plugin
 				}
 			}
 		}
+		shopContainerIds.add(278);	// ISHMAEL'S FISH SHOP AT TEMPOROSS
 		return shopContainerIds.stream().mapToInt(Integer::intValue).toArray();
 	}
 
