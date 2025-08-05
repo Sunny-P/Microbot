@@ -188,6 +188,7 @@ public class CardewSlayerScript extends Script {
                     }
 
                 }
+                // Add a delay before continuing here. Delay set when TaskComplete.
 
                 if (tryForceWalkToMonsterLocation)
                 {
@@ -212,7 +213,11 @@ public class CardewSlayerScript extends Script {
                         timeNotInCombat += deltaTime; // Track timeNotInCombat as seconds.
                         Microbot.log("Time Not In Combat: " + timeNotInCombat);
 
-                        if (timeNotInCombat > 60)   // OUT OF COMBAT FOR 1 MINUTE
+                        if (timeNotInCombat > 60)   // We have been out of combat for a minute. Walk to specific location?
+                        {
+                            Rs2Walker.walkTo(slayerTarget.getLocation());
+                        }
+                        else if (timeNotInCombat > 30)   // OUT OF COMBAT FOR HALF A MINUTE
                         {
                             if (slayerTarget != CUtil.SlayerTarget.NONE && slayerTarget.getLocation() != null && Rs2Player.getWorldLocation() != null)
                             {
@@ -478,8 +483,10 @@ public class CardewSlayerScript extends Script {
                                 Rs2Camera.turnTo(target);
                             }
                         }
-
-                        Rs2Npc.interact(target, "Attack");
+                        if (!target.isDead())
+                        {
+                            Rs2Npc.interact(target, "Attack");
+                        }
                         //Rs2Antiban.actionCooldown();
                     }
                     else
@@ -571,7 +578,10 @@ public class CardewSlayerScript extends Script {
                                 }
                             }
 
-                            Rs2Npc.interact(target, "Attack");
+                            if (!target.isDead())
+                            {
+                                Rs2Npc.interact(target, "Attack");
+                            }
                             //Rs2Antiban.actionCooldown();
                         }
                     }

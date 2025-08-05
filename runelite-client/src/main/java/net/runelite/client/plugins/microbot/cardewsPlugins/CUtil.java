@@ -231,7 +231,8 @@ public class CUtil {
     @Getter
     public enum AlternativeCrabTask {
         SAND_CRAB_AVIUM_SAVANNAH("Sand crab", new WorldPoint(1612, 2892, 0)),
-        SAND_CRAB_HOSIDIUS_SOUTH("Sand crab", new WorldPoint(1765, 3468, 0));
+        SAND_CRAB_HOSIDIUS_SOUTH("Sand crab", new WorldPoint(1765, 3468, 0)),
+        ROCK_CRAB_RELLEKKA("Rock crab", new WorldPoint(2675, 3717, 0));
 
         private final String monsterName;
         private final WorldPoint location;
