@@ -16,9 +16,9 @@ import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
         "Ignores inventory // Start with an empty inventory except your teleport runes/tab<br>" +
         "<br>" +
         "<b>! WARNING !</b><br>" +
-        "This is not a particularly dangerous activity, I have not handled safety if you are low level.<br>" +
+        "This is not a particularly dangerous activity, I have not handled safety if you are really low level.<br>" +
         "<br>" +
-        "--> Start at the bank <--" +
+        "--> Start at the bank &lt;--" +
         "</center>")
 public interface TowerOfLifeCCConfig extends Config {
     @ConfigItem(

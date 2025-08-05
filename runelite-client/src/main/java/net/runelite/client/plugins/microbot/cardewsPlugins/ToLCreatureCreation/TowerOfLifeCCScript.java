@@ -1,42 +1,29 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.ToLCreatureCreation;
 
-import lombok.Getter;
-import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
-import net.runelite.api.ObjectComposition;
 import net.runelite.api.TileObject;
-import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
-import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
-import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
-import net.runelite.client.plugins.microbot.util.bank.Rs2BankData;
 import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
-import net.runelite.client.plugins.microbot.util.coords.Rs2WorldArea;
-import net.runelite.client.plugins.microbot.util.coords.Rs2WorldPoint;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
-import net.runelite.client.plugins.microbot.util.gameobject.Rs2BankID;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
-import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
-import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -261,13 +248,18 @@ public class TowerOfLifeCCScript extends Script {
                 if (Rs2Dialogue.hasContinue())
                 {
                     Rs2Keyboard.keyPress(KeyEvent.VK_SPACE);
+                    sleepGaussian(800, 300);
                     break;
                 }
 
                 switch (_config.SelectedCreature())
                 {
                     case UNICOW:
-                        looting = Rs2GroundItem.lootItemsBasedOnNames(unicowLootParams) && !looting;
+                        //Microbot.log("Looting status before: " + looting);
+                        looting = Rs2GroundItem.lootItemsBasedOnNames(unicowLootParams);
+                        //Microbot.log("Looting status after: " + looting);
+                        //Microbot.log("Ground items: " + (Rs2GroundItem.getGroundItems()));
+                        //Microbot.log("Target list empty: " + targetList.isEmpty());
 
                         if (targetList.isEmpty() && !looting)
                         {
@@ -286,21 +278,25 @@ public class TowerOfLifeCCScript extends Script {
                             else
                             {
                                 currentState = State.MOVING_TO_BANK;
+                                looting = false;
                                 break;
                             }
                         }
                         else if (!targetList.isEmpty() && !Rs2Combat.inCombat())
                         {
-                            Rs2NpcModel target = targetList.stream().findFirst().orElse(null);
+                            Rs2NpcModel target = targetList.stream().findAny().orElse(null);
                             assert target != null;
 
-                            Rs2Npc.attack(target);
+                            if (!target.isDead())
+                            {
+                                Rs2Npc.attack(target);
+                            }
                         }
 
                         break;
 
                     case SPIDINE:
-                        looting = Rs2GroundItem.lootItemsBasedOnNames(spidineLootParams) && !looting;
+                        looting = Rs2GroundItem.lootItemsBasedOnNames(spidineLootParams);
 
                         if (targetList.isEmpty() && !looting)
                         {
@@ -319,15 +315,19 @@ public class TowerOfLifeCCScript extends Script {
                             else
                             {
                                 currentState = State.MOVING_TO_BANK;
+                                looting = false;
                                 break;
                             }
                         }
                         else if (!targetList.isEmpty() && !Rs2Combat.inCombat())
                         {
-                            Rs2NpcModel target = targetList.stream().findFirst().orElse(null);
+                            Rs2NpcModel target = targetList.stream().findAny().orElse(null);
                             assert target != null;
 
-                            Rs2Npc.attack(target);
+                            if (!target.isDead())
+                            {
+                                Rs2Npc.attack(target);
+                            }
                         }
 
                         break;
@@ -348,6 +348,7 @@ public class TowerOfLifeCCScript extends Script {
                         && (_npc.getInteracting() == null || _npc.getInteracting() == Microbot.getClient().getLocalPlayer()))
                 {
                     targetList.add(new Rs2NpcModel(_npc));
+                    Microbot.log("Added " + _npc.getName() + " to targets.");
                 }
                 break;
 
@@ -356,6 +357,7 @@ public class TowerOfLifeCCScript extends Script {
                         && (_npc.getInteracting() == null || _npc.getInteracting() == Microbot.getClient().getLocalPlayer()))
                 {
                     targetList.add(new Rs2NpcModel(_npc));
+                    Microbot.log("Added " + _npc.getName() + " to targets.");
                 }
                 break;
         }
@@ -363,6 +365,9 @@ public class TowerOfLifeCCScript extends Script {
 
     public void RemoveNpcFromTargets(NPC _npc)
     {
-        targetList.removeIf(model -> model.getRuneliteNpc() == _npc);
+        if (targetList.removeIf(model -> model.getRuneliteNpc() == _npc))
+        {
+            Microbot.log("Removed npc from targets: " + _npc.getName());
+        }
     }
 }
