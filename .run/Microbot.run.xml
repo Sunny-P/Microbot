@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Microbot" type="Application" factoryName="Application">
-    <option name="ALTERNATIVE_JRE_PATH" value="11" />
+    <option name="ALTERNATIVE_JRE_PATH" value="$PROJECT_DIR$/../../Java/OpenJDK17U-jdk_x64_windows_hotspot_17.0.17_10/jdk-17.0.17+10" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="net.runelite.client.RuneLite" />
-    <module name="client.main" />
-    <option name="PROGRAM_PARAMETERS" value="-developer-mode" />
+    <module name="runelite.client.main" />
+    <option name="PROGRAM_PARAMETERS" value="-developer-mode -disable-telemetry" />
     <option name="VM_PARAMETERS" value="-ea" />
     <method v="2">
       <option name="Make" enabled="true" />
