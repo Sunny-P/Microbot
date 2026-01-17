@@ -44,6 +44,10 @@ public class LootingParameters {
         setValues(0, 0, range, minItems, minQuantity, minInvSlots, delayedLooting, antiLureProtection,false, null, names);
     }
 
+    public LootingParameters(int range, int minItems, int minQuantity, int minInvSlots, boolean delayedLooting, boolean antiLureProtection, boolean eatFoodForSpace, String[] ignoredNames, String... names) {
+        setValues(0, 0, range, minItems, minQuantity, minInvSlots, delayedLooting, antiLureProtection, eatFoodForSpace, ignoredNames, names);
+    }
+
     /**
      * This constructor is used to create a new LootingParameters object.
      * It sets the range, minimum items, minimum quantity, delayed looting, anti-lure protection, and names of the items to be looted.
