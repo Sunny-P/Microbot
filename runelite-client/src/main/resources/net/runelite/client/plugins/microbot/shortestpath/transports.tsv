@@ -653,6 +653,9 @@
 2674 3306 0	2674 3305 0	Open;Door;11719								1	
 2683 3263 1	2683 3266 0	Cross;Gangplank;2086								1
 2683 3266 0	2683 3263 1	Cross;Gangplank;2085								1
+2674 3306 0	2674 3305 0	Open;Door;11719								1
+2649 3225 0	2649 3224 0	Open;Tower door;21814				Tower of Life
+2649 3224 0	2649 3225 0	Open;Tower door;21814				Tower of Life
 
 # Witchaven Dungeon											
 2697 3283 0	2696 9683 0	Climb-down;Old ruin entrance;18270
@@ -4639,7 +4642,10 @@
 3226 9542 0	3219 9532 2	Enter;Tunnel;6659									
 3219 9532 2	3226 9542 0	Enter;Tunnel;6658									
 3317 9603 0	2748 5374 0	Open;Door;6919									
-2748 5374 0	3317 9603 0	Open;Bone door;22945									
+2748 5374 0	3317 9603 0	Open;Bone door;22945
+# Lumbridge swamp cave
+3169 3171 0	3169 9571 0	Climb-down;Dark hole;5947
+3168 9572 0	3168 3172 0	Climb;Climbing rope;5946
 											
 # Mountain camp											
 2761 3657 0	2761 3660 0	Climb-over;Rockslide;5847									
@@ -4768,9 +4774,7 @@
 											
 # mining guild											
 3021 9739 0	3021 3339 0	Climb-up;Ladder;17385									
-3021 3339 0	3021 9739 0	Climb-down;Ladder;30367	60 Mining
-3046 9757 0	3046 9756 0	Open;Door;30364	60 Mining
-3046 9756 0	3046 9757 0	Open;Door;30364	60 Mining
+3021 3339 0	3021 9739 0	Climb-down;Ladder;30367									
 											
 # portal to gotr											
 3104 9573 0	3615 9470 0	Enter;Portal;43841									
@@ -4942,7 +4946,18 @@
 3670 3454 0	3670 3452 0	Pay-toll(2-Ecto);Energy Barrier;16105				Ghosts Ahoy
 3670 3452 0	3670 3454 0	Pay-toll(2-Ecto);Energy Barrier;16105				Ghosts Ahoy
 3669 3454 0	3669 3452 0	Pay-toll(2-Ecto);Energy Barrier;16105				Ghosts Ahoy
-											
+3659 3509 0	3659 3507 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3659 3507 0	3659 3509 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3660 3509 0	3660 3507 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3660 3507 0	3660 3509 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3654 3485 0	3651 3485 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3651 3485 0	3654 3485 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3654 3486 0	3651 3486 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3651 3486 0	3654 3486 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3670 3454 0	3670 3452 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3670 3452 0	3670 3454 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+3669 3454 0	3669 3452 0	Pass;Energy Barrier;57722				Ghosts Ahoy
+
 # Port Khazard											
 2674 3141 1	2674 3144 0	Cross;Gangplank;17403									
 2674 3144 0	2674 3141 1	Cross;Gangplank;17402									
@@ -5193,6 +5208,15 @@
 2167 9308 0	2310 2919 0	Exit;Opening;40737
 2763 2951 0	2763 2951 1	Climb-up;Ladder;16683
 2763 2952 1	2763 2951 0	Climb-down;Ladder;16679
+# Lighthouse
+2509 3635 0	2509 3636 0	Walk-through;Doorway;4577				Horror from the Deep
+2509 3636 0	2509 3635 0	Walk-through;Doorway;4577				Horror from the Deep
+2510 3644 0	2518 9994 0	Climb;Iron ladder;4383				Horror from the Deep
+2518 9994 0	2510 3644 0	Climb;Iron ladder;4412				Horror from the Deep
+2516 10002 0	2516 10003 0	Open;Strange wall;4545				Horror from the Deep
+2513 10003 0	2513 10002 0	Open;Strange wall;4546				Horror from the Deep
+2515 10005 0	2515 10008 0	Climb;Iron ladder;4485				Horror from the Deep
+2515 10008 0	2515 10005 0	Climb;Iron ladder;4413				Horror from the Deep
 # woodcutting guild
 1574 3483 1	1575 3483 0	Climb-down;Rope ladder;28858
 1575 3483 0	1574 3483 1	Climb-up;Rope ladder;28857

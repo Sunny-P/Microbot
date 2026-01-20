@@ -13,7 +13,7 @@
 3033 3390 0	3033 3389 1	Grapple;Wall;17049	11 Agility;19 Ranged;37 Strength	9419				
 3032 3388 0	3032 3389 1	Grapple;Wall;17050	11 Agility;19 Ranged;37 Strength	9419				
 2575 3107 0	2575 3112 0	Climb-under;Castle wall;16519	16 Agility					
-2575 3112 0	2575 3107 0	Climb-into;Hole;16520	16 Agility					
+2575 3112 0	2575 3107 0	Climb-into;Hole;16520	16 Agility
 2603 3477 0	2598 3477 0	Walk-across;Log balance;23274	20 Agility					
 2599 3478 0	2603 3477 0	Walk-across;Log balance;23274	20 Agility					
 2602 3478 0	2598 3477 0	Walk-across;Log balance;23274	20 Agility					
@@ -71,7 +71,9 @@
 2900 3680 0	2903 3680 0	Climb;Rocks;16524	47 Agility					
 2903 3680 0	2900 3680 0	Climb;Rocks;16524	47 Agility					
 2901 3679 0	2903 3680 0	Climb;Rocks;16524	47 Agility					
-2902 3681 0	2900 3680 0	Climb;Rocks;16524	47 Agility					
+2902 3681 0	2900 3680 0	Climb;Rocks;16524	47 Agility
+2722 3592 0	2722 3596 0	Walk-across;Log balance;16542	48 Agility
+2722 3596 0	2722 3592 0	Walk-across;Log balance;16540	48 Agility
 1776 3884 0	1776 3880 0	Jump;Boulder;27990	49 Agility				4	
 3422 3325 0	3417 3325 0	Cross;Stepping stone;13504	50 Agility					
 3417 3325 0	3422 3325 0	Cross;Stepping stone;13504	50 Agility					
