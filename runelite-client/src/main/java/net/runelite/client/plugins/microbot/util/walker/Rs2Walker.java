@@ -233,13 +233,14 @@ public class Rs2Walker {
             }
 
             checkIfStuck();
-            if (stuckCount > 10) {
+            if (stuckCount >= config.calculationCutoff()) {
                 var moveableTiles = Rs2Tile.getReachableTilesFromTile(Rs2Player.getWorldLocation(), 5).keySet().toArray(new WorldPoint[0]);
                 if (moveableTiles.length > 0) {
                     walkMiniMap(moveableTiles[Rs2Random.between(0, moveableTiles.length)]);
                     sleepGaussian(1000, 300);
                     stuckCount = 0;
                 }
+                recalculatePath();
             }
 
             int indexOfStartPoint = getClosestTileIndex(path);
@@ -1040,7 +1041,7 @@ public class Rs2Walker {
     private static boolean handleDoors(List<WorldPoint> path, int index) {
         if (ShortestPathPlugin.getPathfinder() == null || index >= path.size() - 1) return false;
 
-        List<String> doorActions = List.of("pay-toll", "pick-lock", "walk-through", "go-through", "open");
+        List<String> doorActions = List.of("pass-through", "pay-toll", "pick-lock", "walk-through", "go-through", "open");
         boolean isInstance = Microbot.getClient()
                 .getTopLevelWorldView()
                 .getScene()
@@ -2054,6 +2055,7 @@ public class Rs2Walker {
     private static void checkIfStuck() {
         if (Rs2Player.getWorldLocation().equals(lastPosition)) {
             stuckCount++;
+            //Microbot.log("Pathing is stuck, at count: " + stuckCount);
         } else {
             stuckCount = 0;
         }

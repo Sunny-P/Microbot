@@ -5220,3 +5220,9 @@
 # woodcutting guild
 1574 3483 1	1575 3483 0	Climb-down;Rope ladder;28858
 1575 3483 0	1574 3483 1	Climb-up;Rope ladder;28857
+# Quetzacali Gorge
+1511 3241 0	1520 3250 0	Pass-through;Gate;55323
+1520 3250 0	1511 3241 0	Pass-through;Gate;55322
+# Ruins of Tapoyauik
+1642 3222 0	1631 9632 0	Use;Lift Platform;54524				The Heart of Darkness
+1631 9632 0	1642 3222 0	Use;Lift Platform;54521				The Heart of Darkness
