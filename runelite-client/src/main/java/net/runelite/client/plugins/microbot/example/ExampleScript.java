@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.example;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
@@ -60,7 +61,7 @@ public class ExampleScript extends Script {
             try {
                 if (!Microbot.isLoggedIn()) return;
 
-                Rs2Bank.depositAll(13573);
+                Microbot.log("Item Container ID: " + InterfaceID.Bankmain.ITEMS);
                 
 
             } catch (Exception ex) {

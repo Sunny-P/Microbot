@@ -125,6 +125,7 @@ public class Rs2Bank {
         if (container == BANK_INVENTORY_ITEM_CONTAINER) {
             itemBoundingBox = Rs2Inventory.itemBounds(rs2Item);
         }
+
         if (container == BANK_ITEM_CONTAINER) {
             int itemTab = getItemTabForBankItem(rs2Item.getSlot());
             if (!isTabOpen(itemTab))

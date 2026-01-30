@@ -1,5 +1,6 @@
 package net.runelite.client.plugins.microbot.cardewsPlugins.CardewSlayer;
 
+import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.*;
@@ -8,6 +9,8 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
+import net.runelite.client.plugins.microbot.api.tileitem.Rs2TileItemQueryable;
+import net.runelite.client.plugins.microbot.api.tileitem.models.Rs2TileItemModel;
 import net.runelite.client.plugins.microbot.cardewsPlugins.CUtil;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.Rs2InventorySetup;
@@ -1482,6 +1485,14 @@ public class CardewSlayerScript extends Script {
                     " seed"
             );
             seedItemParams.setEatFoodForSpace(true);
+
+            List<String> ignoreList = new ArrayList<>();
+            ignoreList.add("");
+            Rs2TileItemQueryable item = Microbot.getRs2TileItemCache().query()
+                    .withNames("item1", "item2")
+                    .within(10)
+                    .where(loot -> loot.getTotalGeValue() >= 1000);
+            item.nearest().click("Take");
             if (Rs2GroundItem.lootItemsBasedOnNames(seedItemParams))
             {
                 justLooted = true;
