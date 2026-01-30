@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.runelite.api.widgets.ComponentID.BANK_INVENTORY_ITEM_CONTAINER;
+//import static net.runelite.api.widgets.ComponentID.BANK_ITEM_CONTAINER;
 import static net.runelite.client.plugins.microbot.util.Global.*;
 import static net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject.hoverOverObject;
 import static net.runelite.client.plugins.microbot.util.npc.Rs2Npc.hoverOverActor;
@@ -125,7 +126,6 @@ public class Rs2Bank {
         if (container == BANK_INVENTORY_ITEM_CONTAINER) {
             itemBoundingBox = Rs2Inventory.itemBounds(rs2Item);
         }
-
         if (container == BANK_ITEM_CONTAINER) {
             int itemTab = getItemTabForBankItem(rs2Item.getSlot());
             if (!isTabOpen(itemTab))
