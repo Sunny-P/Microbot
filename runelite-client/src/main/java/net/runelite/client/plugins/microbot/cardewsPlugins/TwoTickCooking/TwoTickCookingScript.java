@@ -5,6 +5,7 @@ import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.api.tileitem.models.Rs2TileItemModel;
 import net.runelite.client.plugins.microbot.api.tileobject.models.Rs2TileObjectModel;
+import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerScript;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
@@ -30,84 +31,27 @@ public class TwoTickCookingScript extends Script {
                 if (!super.run()) return;
                 if (Microbot.pauseAllScripts.get()) return;
                 if (Rs2AntibanSettings.microBreakActive) return;
+                if (Rs2AntibanSettings.actionCooldownActive) return;
                 //long startTime = System.currentTimeMillis();
 
                 if (Rs2Antiban.getActivity() != Activity.TWO_TICK_COOKING)
                 {
                     Rs2Antiban.setActivity(Activity.TWO_TICK_COOKING);
                 }
+                HandleBreakLockState();
 
                 switch (state)
                 {
                     case BANK:
-                        if (!Rs2Bank.isOpen())
-                        {
-                            Rs2Bank.openBank();
-                            return;
-                        }
-
-                        if (Rs2Inventory.count() > 0)
-                        {
-                            Rs2Bank.depositAll();
-                        }
-
-                        if (!Rs2Bank.withdrawAll(config.RawItemID()))
-                        {
-                            Microbot.showMessage("Couldn't find any more item with ID: " + config.RawItemID() + "! Shutting down...");
-                            Microbot.stopPlugin(TwoTickCookingPlugin.class);
-                            return;
-                        }
-                        Rs2Inventory.waitForInventoryChanges(1000);
-                        if (Rs2Inventory.hasItem(config.RawItemID()))
-                        {
-                            Rs2Bank.closeBank();
-                            state = State.DROP;
-                        }
+                        HandleBanking(config);
                         break;
 
                     case DROP:
-                        if (Rs2Player.isMoving()) return;
-
-                        if (Rs2Player.getWorldLocation().equals(standLocation))
-                        {
-                            Rs2Inventory.dropAll(config.RawItemID());
-                        }
-                        else
-                        {
-                            Rs2Walker.walkFastCanvas(standLocation);
-                            return;
-                        }
-
-                        if (Rs2Inventory.count() == 0)
-                        {
-                            state = State.COOK;
-                        }
+                        HandleDropping(config);
                         break;
 
                     case COOK:
-                        // Pick-up 1 dropped fish.
-                        Rs2TileItemModel pickedFish = Microbot.getRs2TileItemCache().query()
-                                .withId(config.RawItemID())
-                                .where(Rs2TileItemModel::isOwned)
-                                .first();
-                        if (pickedFish == null)
-                        {
-                            //Microbot.log("TwoTickCooking: pickedFish is null!", Level.DEBUG);
-                            state = State.BANK;
-                            return;
-                        }
-                        pickedFish.click("Take");
-                        Rs2Inventory.waitForInventoryChanges(600);
-
-                        Rs2TileObjectModel cookingPot = Microbot.getRs2TileObjectCache().query()
-                                .withId(41316).first();
-                        if (cookingPot == null)
-                        {
-                            Microbot.log("TwoTickCooking: cookingPot is null!", Level.DEBUG);
-                            return;
-                        }
-                        cookingPot.click("Cook");
-                        Rs2Inventory.waitForInventoryChanges(600);
+                        HandleCooking(config);
                         break;
                 }
 
@@ -125,5 +69,100 @@ public class TwoTickCookingScript extends Script {
     @Override
     public void shutdown() {
         super.shutdown();
+    }
+
+    void HandleBreakLockState()
+    {
+        if (state != State.BANK)
+        {
+            if (!BreakHandlerScript.isLockState())
+            {
+                BreakHandlerScript.setLockState(true);
+            }
+        }
+        else
+        {
+            if (BreakHandlerScript.isLockState())
+            {
+                BreakHandlerScript.setLockState(false);
+            }
+        }
+    }
+
+    void HandleBanking(TwoTickCookingConfig config)
+    {
+        if (!Rs2Bank.isOpen())
+        {
+            Rs2Bank.openBank();
+            return;
+        }
+
+        if (Rs2Inventory.count() > 0)
+        {
+            Rs2Bank.depositAll();
+        }
+
+        if (!Rs2Bank.withdrawAll(config.RawItemID()))
+        {
+            Microbot.showMessage("Couldn't find any more item with ID: " + config.RawItemID() + "! Shutting down...");
+            Microbot.stopPlugin(TwoTickCookingPlugin.class);
+            return;
+        }
+        Rs2Inventory.waitForInventoryChanges(1000);
+        if (Rs2Inventory.hasItem(config.RawItemID()))
+        {
+            Rs2Bank.closeBank();
+            state = State.DROP;
+            Rs2Antiban.actionCooldown();
+        }
+    }
+
+    void HandleDropping(TwoTickCookingConfig config)
+    {
+        if (Rs2Player.isMoving()) return;
+
+        if (Rs2Player.getWorldLocation().equals(standLocation))
+        {
+            Rs2Inventory.dropAll(config.RawItemID());
+        }
+        else
+        {
+            Rs2Walker.walkFastCanvas(standLocation);
+            Rs2Antiban.actionCooldown();
+            return;
+        }
+
+        if (Rs2Inventory.count() == 0)
+        {
+            state = State.COOK;
+            Rs2Antiban.actionCooldown();
+        }
+    }
+
+    void HandleCooking(TwoTickCookingConfig config)
+    {
+        // Pick-up 1 dropped fish.
+        Rs2TileItemModel pickedFish = Microbot.getRs2TileItemCache().query()
+                .withId(config.RawItemID())
+                .where(Rs2TileItemModel::isOwned)
+                .first();
+        if (pickedFish == null)
+        {
+            //Microbot.log("TwoTickCooking: pickedFish is null!", Level.DEBUG);
+            state = State.BANK;
+            return;
+        }
+        pickedFish.click("Take");
+        Rs2Inventory.waitForInventoryChanges(600);
+
+        Rs2TileObjectModel cookingPot = Microbot.getRs2TileObjectCache().query()
+                .withId(41316).first();
+        if (cookingPot == null)
+        {
+            Microbot.log("TwoTickCooking: cookingPot is null!", Level.DEBUG);
+            return;
+        }
+        cookingPot.click("Cook");
+        Rs2Inventory.waitForInventoryChanges(600);
     }
 }
