@@ -265,7 +265,7 @@ public interface BreakHandlerConfig extends Config {
             position = 5,
             section = advancedOptions
     )
-    @Range(min = 1, max = 10)
+    @Range(min = 1, max = 30)
     default int safeConditionTimeout() {
         return 10;
     }
