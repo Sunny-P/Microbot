@@ -32,11 +32,12 @@ import javax.inject.Inject;
 import static net.runelite.api.ChatMessageType.GAMEMESSAGE;
 import static net.runelite.api.ChatMessageType.TRADE;
 import net.runelite.api.Client;
-import net.runelite.api.ScriptID;
 import net.runelite.api.Player;
+import net.runelite.api.ScriptID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.AnimationID;
@@ -47,6 +48,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.DrawManager;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageCapture;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -111,6 +113,10 @@ public class ScreenshotPluginTest
 	@Bind
 	private ImageCapture imageCapture;
 
+	@Mock
+	@Bind
+	private OverlayManager overlayManager;
+
 	@Before
 	public void before()
 	{
@@ -150,6 +156,17 @@ public class ScreenshotPluginTest
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(489, screenshotPlugin.getKillCountNumber());
+	}
+
+	@Test
+	public void testDelveLootClaimed()
+	{
+		when(screenshotConfig.screenshotRewards()).thenReturn(true);
+
+		ScriptPostFired scriptPostFiredEvent = new ScriptPostFired(ScriptID.DOM_LOOT_CLAIM);
+		screenshotPlugin.onScriptPostFired(scriptPostFiredEvent);
+
+		verify(screenshotPlugin).takeScreenshot("Doom of Mokhaiotl", "Chest Loot");
 	}
 
 	@Test
